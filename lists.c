@@ -28,7 +28,7 @@ void InsertResult(Result *head,int rowID2,int rowID1){
 
 void PrintResults(Result *head){
   ResultNode *temp;
-  int i;
+  int i,count=1;
   temp = head->first;
   if(temp==NULL){
     printf("There are no matches.\n");
@@ -38,7 +38,8 @@ void PrintResults(Result *head){
   printf("-----------\n");
   while(temp!=NULL){
     for(i=0;i<temp->size;i++){
-      printf("%d\t|%d\t\n",temp->buffer[i][0],temp->buffer[i][1]);
+      printf("%d:\t%d\t|%d\t\n",count,temp->buffer[i][0],temp->buffer[i][1]);
+      count++;
     }
     temp = temp->next;
   }

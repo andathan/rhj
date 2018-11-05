@@ -23,15 +23,16 @@ Relation* fill_table(int type)
 {
 
   Relation *in_relation = (Relation *)malloc(sizeof(Relation));
-  in_relation->num_tuples=100;
+  in_relation->num_tuples=SIZE;
   in_relation->tuples = malloc(sizeof(tuple)*in_relation->num_tuples);
   if (type==0)//random
-  {srand(time(NULL));
-  for (int i=0;i<in_relation->num_tuples;i++)
   {
-    in_relation->tuples[i].key = i;
-    in_relation->tuples[i].payload=rand()%100;
-  }
+    srand(time(NULL));
+    for (int i=0;i<in_relation->num_tuples;i++)
+    {
+      in_relation->tuples[i].key = i;
+      in_relation->tuples[i].payload=rand()%100;
+    }
   }
   else if (type==1)//monoi
   {

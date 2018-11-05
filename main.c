@@ -1,4 +1,5 @@
 #include "rhj.h"
+#include "lists.h"
 
 int main (void)
 {

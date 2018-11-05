@@ -1,3 +1,4 @@
+#include "lists.h"
 #include "rhj.h"
 
 int *make_histogram(Relation *in_relation){
@@ -49,7 +50,7 @@ Relation* segmentation(Relation *in_relation,int *histogram,int *offsets){
 }
 
 
-Result *IndexAndResult(int index_tuples,int comp_tuples,int index_Psum,int comp_Psum,Relation *indexRel,Relation *compRel,Relation *initialRel,Result *results){
+Result *IndexAndResult(int index_tuples,int comp_tuples,int index_Psum,int comp_Psum,Relation *indexRel,Relation *compRel,Result *results){
 
   int j,k,rowID,hash_key,new,previoys,key1,key2,payload1,payload2,range_hashfunction,previous;
   int *chain=NULL , *hashtable=NULL;
@@ -118,9 +119,9 @@ Result* RadixHashJoin(Relation *relR, Relation *relS){
 
   for (i=0;i<num_of_buckets;i++){
     if (histogram_R[i]<histogram_S[i]){
-      results = IndexAndResult(histogram_R[i],histogram_S[i],Psum_R[i],Psum_S[i],relR_seg,relS_seg,relR,results);
+      results = IndexAndResult(histogram_R[i],histogram_S[i],Psum_R[i],Psum_S[i],relR_seg,relS_seg,results);
     }else{
-      results = IndexAndResult(histogram_S[i],histogram_R[i],Psum_S[i],Psum_R[i],relS_seg,relR_seg,relS,results);
+      results = IndexAndResult(histogram_S[i],histogram_R[i],Psum_S[i],Psum_R[i],relS_seg,relR_seg,results);
     }
   }
   free(histogram_R);

@@ -1,4 +1,4 @@
-#include "rhj.h"
+#include "lists.h"
 
 Result *ListInit(){
   Result *node = (Result *)malloc(sizeof(Result));
@@ -30,38 +30,38 @@ void PrintResults(Result *head){
   ResultNode *temp;
   int i,count=1;
   temp = head->first;
-  if(head==NULL || temp==NULL){
+  if(temp==NULL){
     printf("There are no matches.\n");
     return ;
-  }else{
-    printf("A\t|B\t\n");
-    printf("-----------\n");
-    while(temp!=NULL){
-      for(i=0;i<temp->size;i++){
-        printf("%d:\t%d\t|%d\t\n",count,temp->buffer[i][0],temp->buffer[i][1]);
-        count++;
-      }
-      temp = temp->next;
-    }
   }
+  printf("A\t|B\t\n");
+  printf("-----------\n");
+  while(temp!=NULL){
+    for(i=0;i<temp->size;i++){
+      printf("%d:\t%d\t|%d\t\n",count,temp->buffer[i][0],temp->buffer[i][1]);
+      count++;
+    }
+    temp = temp->next;
+  }
+
 }
 
-void deletelist(Result *head)
-{
-  if(head==NULL) return;
-  ResultNode *temp;
-  ResultNode *to_free;
-  temp = head->first;
-  if(temp==NULL){
-    free(head);
-    return ;
-  }else{
-    while(temp!=NULL){
-      to_free=temp;
-      temp = temp->next;
-      free(to_free);
-    }
-    free(head);
+void deletelist(Result *head){
+  if(head==NULL){
     return;
+  }else{
+    if(head->first == NULL){
+      free(head);
+      return;
+    }else{
+      ResultNode *temp = head->first;
+      ResultNode *to_free;
+      while(temp!=NULL){
+        to_free = temp;
+        temp = temp->next;
+        free(to_free);
+      }
+      free(head);
+    }
   }
 }

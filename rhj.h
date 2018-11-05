@@ -6,6 +6,7 @@
 
 #define N 3
 #define BUFFERSIZE 10//1024*1024/64
+#define SIZE 1000
 
 struct tuple{
   int32_t key;    //rowID

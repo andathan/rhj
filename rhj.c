@@ -56,8 +56,6 @@ Result *IndexAndResult(int index_tuples,int comp_tuples,int index_Psum,int comp_
 
   if(index_tuples==0) return results;
 
-  for(k=0;k<index_tuples;k++)
-      printf("%d - %d\n",indexRel->tuples[index_Psum+k].key,indexRel->tuples[index_Psum+k].payload );
   range_hashfunction=getnextodd(index_tuples);
 
   chain = (int *)malloc(sizeof(int)*index_tuples);
@@ -72,34 +70,27 @@ Result *IndexAndResult(int index_tuples,int comp_tuples,int index_Psum,int comp_
   for (j=0;j<index_tuples;j++){
     hash_key = H2(indexRel->tuples[index_Psum+j].payload) % range_hashfunction;
     previous = hashtable[hash_key];
-    new = indexRel->tuples[index_Psum+j].key; //pairnw to kainourgio klidi
+    new = j; //pairnw to kainourgio klidi
     hashtable[hash_key] = new;
     if (previous!=-1)
       chain[new] = previous;
-    printf("yes\n");
   }
-  printf("hashtable\n");
-  for (k=0;k<range_hashfunction;k++)
-    printf("%d\n",hashtable[k] );
-  printf("chain[]\n");
-  for(k=0;k<index_tuples;k++)
-    printf("%d\n",chain[k] );
   for(j=0;j<comp_tuples;j++){
     hash_key= H2(compRel->tuples[comp_Psum+j].payload) % range_hashfunction;
     rowID = hashtable[hash_key];
     while (rowID!=-1){
-      payload1 = initialRel->tuples[rowID].payload;
+      payload1 = indexRel->tuples[index_Psum+rowID].payload;
       payload2 = compRel->tuples[comp_Psum+j].payload;
-      printf("%d == %d\n",payload1,payload2 );
       if (payload1==payload2){
-        //kai edo
-        key1=initialRel->tuples[rowID].payload;
-        key2=compRel->tuples[comp_Psum+j].payload;
+        key1=indexRel->tuples[index_Psum+rowID].key;
+        key2=compRel->tuples[comp_Psum+j].key;
         InsertResult(results,key1,key2);
       }
       rowID = chain[rowID];//pairnw tin proigoumeni eggrafi meso tou chain
     }
   }
+  free(hashtable);
+  free(chain);
   return results;
 }
 
@@ -134,6 +125,10 @@ Result* RadixHashJoin(Relation *relR, Relation *relS){
   }
   free(histogram_R);
   free(histogram_S);
+  free(Psum_R);
+  free(Psum_S);
+  free(relS_seg->tuples);
+  free(relR_seg->tuples);
   free (relS_seg);
   free (relR_seg);
   return results;

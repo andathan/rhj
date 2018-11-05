@@ -132,5 +132,9 @@ Result* RadixHashJoin(Relation *relR, Relation *relS){
       results = IndexAndResult(histogram_S[i],histogram_R[i],Psum_S[i],Psum_R[i],relS_seg,relR_seg,relS,results);
     }
   }
+  free(histogram_R);
+  free(histogram_S);
+  free (relS_seg);
+  free (relR_seg);
   return results;
 }

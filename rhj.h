@@ -56,3 +56,4 @@ Relation * segmentation(Relation *,int *,int *);
 Relation* fill_table();
 int *make_histogram(Relation *in_relation);
 int *make_offsets(int *histogram);
+void deletelist(Result *head);

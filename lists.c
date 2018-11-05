@@ -43,5 +43,20 @@ void PrintResults(Result *head){
     }
     temp = temp->next;
   }
-
 }
+
+void deletelist(Result *head)
+{
+  ResultNode *temp;
+  ResultNode *to_free;
+  temp = head->first;
+  if(temp==NULL){
+    return ;
+  }
+  while(temp!=NULL){
+      to_free=temp;
+      temp = temp->next;
+      free(to_free);
+    }
+    return;
+  }

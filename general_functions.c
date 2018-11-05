@@ -23,7 +23,7 @@ Relation* fill_table(int type)
 {
 
   Relation *in_relation = (Relation *)malloc(sizeof(Relation));
-  in_relation->num_tuples=10;
+  in_relation->num_tuples=100;
   in_relation->tuples = malloc(sizeof(tuple)*in_relation->num_tuples);
   if (type==0)//random
   {srand(time(NULL));

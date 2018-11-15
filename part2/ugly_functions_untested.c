@@ -1,15 +1,16 @@
-Relation *BuildRelation(stepping_list *head,Relation *init_relation){
+Relation *BuildRelation(inbet_list *list,Relation *init_relation){
   /* input: list of inbetween results , initial Relation
       output : a Relation with inbetween tuples*/
-  stepping_stone->stepping_arrays[predicates[i]->rel1],arrays_in_query[predicates[i]->rel1]->columns[col1]
-  stepping_list *current = head;
+  int i,c=0;
   Relation *new_relation = (Relation *)malloc(sizeof(Relation));
   new_relation->tuples = malloc(sizeof(tuple)*head->total);
-  new_relation->num_tuples = head->total;
-  int i,c=0;
+  new_relation->num_tuples = list->total_tuples;
+  
+  inbet_node *current = list->head;
+  
   while(current!=NULL){ //for every node in list
-    for(i=0;i<stepping_list->counter;i++){  //for every rowID in node
-      new_relation[c].key = stepping_list->rowIDS[i];
+    for(i=0;i<current->num_tuples;i++){  //for every rowID in node
+      new_relation[c].key = current->rowIDS[i];
       new_relation[c].payload = init_relation[new_relation[c].key].payload;
     }
     current = current->next;

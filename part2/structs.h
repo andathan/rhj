@@ -23,7 +23,7 @@ typedef struct predicates predicates;
 struct inbet_node{           /*struct to store inbetween relations*/
   int rowIDS[BUFFERSIZE]        /*array of rowIDS*/
   int num_tuples;               /*number of tuples in array*/     
-  stepping_list *next;          /*pointer to the next node */
+  struct inbet_node *next;          /*pointer to the next node */
 };
 typedef struct inbet_node inbet_node;
 

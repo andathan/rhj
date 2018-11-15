@@ -16,3 +16,19 @@ Relation *BuildRelation(stepping_list *head,Relation *init_relation){
   }
   return new_relation;
 }
+
+
+inbetween_results *InitInbetResults(int n){
+  /*initializes the struct of inbtween results*/
+  int i;
+  inbetween_results *results = malloc(sizeof(inbetween_results));
+  results->num_lists=n;
+  results->inbet_lists = malloc(sizeof(inbet_list *)*results->num_lists);
+  for(i=0;i<results->num_lists;i++){
+    results->inbet_lists[i] = ( inbet_list * ) malloc(sizeof(inbet_list));
+    results->inbet_lists[i]->head=NULL;
+    results->inbet_lists[i]->current=NULL;
+    results->inbet_lists[i]->total_tuples=0;
+  }
+  return results;
+}

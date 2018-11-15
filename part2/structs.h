@@ -35,7 +35,7 @@ struct inbet_list{
 typedef struct inbet_list inbet_list;
 
 struct inbetween_results{            
-  inbet_list **inbetween_lists; /*array of pointers to lists*/
+  inbet_list **inbet_lists; /*array of pointers to lists*/
   int num_lists;                  /*number of lists*/
 }
 

@@ -78,6 +78,7 @@ struct stepping_list{
 
 struct stepping_stone{
   stepping_list **stepping_arrays
+  int total;
 }
 
 3.execute(query){

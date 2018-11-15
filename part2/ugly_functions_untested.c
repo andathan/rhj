@@ -32,3 +32,24 @@ inbetween_results *InitInbetResults(int n){
   }
   return results;
 }
+
+inbet_node *InitInbetNode(){
+  inbet_node *node = malloc(sizeof(inbet_node));
+  node->num_tuples=0;
+  node->next=NULL;
+  return node;
+}
+
+void UpdateInbetList(inbet_list *list,int key){
+  if(list == NULL) return;
+  if(list->head==NULL){     /*list is empty*/
+    list->head = InitInbetNode();
+    list->current = list->head;
+  }else if(list->current->num_tuples==BUFFERSIZE-1){ /*current buffer is full*/
+    list->current->next = InitInbetNode();
+    list->current = list->current->next;
+  }
+  list->current->rowIDS[list->current->num_tuples]=key;
+  list->current->num_tuples++;
+  list->total_tuples++;
+}

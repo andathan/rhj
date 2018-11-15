@@ -29,7 +29,6 @@ struct predicates{
   Relation *current_relation
   while(file_name!=DONE){
     my_data->table = realloc
-    my_data->counter++
     open file_name
     //numTuples|uint64_t numColumns|uint64_t T0C0|uint64_t T1C0|..|uint64_t
     //TnC0|uint64_t T0C1|..|uint64_t TnC1|..|uint64_t TnCm
@@ -37,7 +36,7 @@ struct predicates{
     my_data->table[my_data->counter]->numColumns = numColumns
     my_data->table[my_data->counter]->numTuples = numTuples
     my_data->table[my_data->counter]->columns = (Relation **)malloc(sizeof(Relation *)*numColumns)
-
+    my_data->counter++
 
     for i apo 0 mexri numColumns{
       current_relation = malloc(Relation)
@@ -82,7 +81,7 @@ struct stepping_stone{
 
 3.execute(query){
 
-  char *tokens[3];
+  char *tokens[3]; //ta 3 kommatia tou query
   int k = 0 ;
   tokens[k] = strtok(query,"|\n");
   while(k<2){
@@ -93,16 +92,25 @@ struct stepping_stone{
   //tokens[1] = katigorimata
   //tokens[2]= proboles
 
-  num_arrays_in_query = ((strlen(tokens[0]) - 1 )div 2 ) + 1
-  relation_data **arrays_in_query = malloc(sizeof(relation_data *)*num_arrays_in_query);
-  stepping_stone *stepping_stone;
-  stepping_stone = malloc(sizeof(stepping_stone))
-  stepping_stone ->stepping_arrays = malloc(sizeof(stepping_list) * num_arrays_in_query)
+  num_arrays_in_query = ((strlen(tokens[0]) - 1 )div 2 ) + 1  // -1 gia to /0 , div 2 giati ta misa einai kena , +1 giati panta monos
+  //desmeuo treis deiktes se relation data gia na kratiso deiktes apo to arxiko array
+  //bazo diplo deikti giati to posa arrays simmetexoun sto query einai metablito megethos
+  relation_data **arrays_in_query = malloc(sizeof(relation_data *)*num_arrays_in_query); 
+  //sto stp_stone kratao tous endiamesous pinakes gia kathe relation pou simmetexei
+  //stp_stone->stepping_array[0] endiamesos pinakas gia to 1o
+  //stp_stone->stepping_array[1] endiamesos pinakas gia to 2o k.o.k
+  stepping_stone *stp_stone;
+  stp_stone = malloc(sizeof(stepping_stone))
+  stp_stone ->stepping_arrays = malloc(sizeof(stepping_list *) * num_arrays_in_query)
   for i apo 0 mexri arrays_in_query{
-    stepping_stone ->stepping_arrays[i]=NULL;
-    position = atoi(tokens[0][0])
-    tokens[0]+=2
+    stp_stone ->stepping_arrays[i]=NULL;
+    position = atoi(tokens[0][0]) //sto 1o token tou query , blepo se poious pinakes anaferete kai kratao antistoixisi ston arrays_in_query
+    //p.x. an query=0 2 4|...
+    //arrays_in_query[0]=0
+    //arrays_in_query[1]=2
+    //arrays_in_query[2]=4 , kai kratao deiktes ston arxiko
     arrays_in_query[i] = my_data->table[position]
+    tokens[0]+=2
   }
 
   // edo pou eimai me to arrays_in_query exo prosbasi sta dedomena tou pinakas
@@ -130,10 +138,11 @@ struct stepping_stone{
   }
 
   // peripou to idio gia to tokens[2] pou exei tis proboles
+  //pao gia execute
   for(i=0;i<num_predicates;i++){
     if(!strcmp(predicates[i]->op,"=")){
       if(predicates[i]->rel1 == -1 || predicates[i]->rel2 == -1  ){
-        if(predicates[i]->rel1==-1){
+        if(predicates[i]->rel1==-1){    //den exo join
           if(stepping_stone->stepping_arrays[predicates[i]->rel1] != NULL ){
             relation = build_relation(stepping_stone->stepping_arrays[predicates[i]->rel1],arrays_in_query[predicates[i]->rel1]->columns[col1])
             constant = col2

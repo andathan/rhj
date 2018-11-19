@@ -16,7 +16,7 @@ struct predicates{      /* struct predicates stores info for predicate in query*
   int col1;             /* index of column of 1st relation in predicate*/
   int rel2;             /* index of 2nd relation in predicate*/
   int col2;             /* index of column of 2nd relation in predicate*/
-  char[3] op;           /* operation between the 2 columns */
+  char op[3];           /* operation between the 2 columns */
 }
 typedef struct predicates predicates;
 

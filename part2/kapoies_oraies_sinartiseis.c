@@ -123,6 +123,11 @@ void  fill_predicate_types (char * token, int num_predicates, predicate_type ** 
   }
 }
 
+void call_op (char op, int constant; )
+{
+
+
+}
 
 int main (void)
 {
@@ -135,4 +140,26 @@ int main (void)
   predicate_type ** predicates = malloc(sizeof(predicate_type *)*num_predicates);
   fill_predicate_types(tokens[1],num_predicates,predicates);
   print_predicates(predicates,num_predicates);
+  for(i=0;i<num_predicates;i++)
+  {
+    if (!strcmp(predicates[i])->op,"=")
+    {
+        if(predicates[i]->rel1 == -1 || predicates[i]->rel2 == -1) //den exw join
+        {
+            if(predicates[i]->rel1==-1) //einai tis morfis constant op relation column
+            {
+              if(stepping_stone->stepping_arrays[predicates[i]->rel1] != NULL )
+              {
+                relation = build_relation(stepping_stone->stepping_arrays[predicates[i]->rel1],arrays_in_query[predicates[i]->rel1]->columns[col1])
+                constant = col2
+              }
+              else
+              {
+                relation = arrays_in_query[predicates[i]->rel1]->columns[col1]
+                constant=col2 // o arithmos pou tha sigkrinw
+              }
+            }
+    }
+
+  }
 }

@@ -210,7 +210,7 @@ int *  find_corresponding(char * token)
   return corresponding_table;
 }
 
-void compute_operation (char op, int constant,Relation * relation)
+void compute_operation (char op, int constant,Relation * relation,inbet_list A)
 {
   int i;
   if (op == '=')
@@ -219,7 +219,7 @@ void compute_operation (char op, int constant,Relation * relation)
     {
       if (relation->tuples->payload == constant)
       {
-        //insert sta results relation->tuples->key
+        UpdateInbetList (A, relation->tuples->key);
       }
     }
   }
@@ -229,7 +229,7 @@ void compute_operation (char op, int constant,Relation * relation)
     {
       if (relation->tuples->payload > constant)
       {
-        //insert sta results relation->tuples->key
+      UpdateInbetList (A, relation->tuples->key);
       }
     }
   }
@@ -239,15 +239,14 @@ void compute_operation (char op, int constant,Relation * relation)
     {
       if (relation->tuples->payload < constant)
       {
-        //insert sta results relation->tuples->key
+      UpdateInbetList (A, relation->tuples->key);
       }
     }
   }
 }
 
-void show_proboles (inbetween_results inb_results, all_data input_data)
+void show_proboles (inbetween_results inb_results, all_data input_data) //thelei ligi doulitsa
 {
-  Relation * result_relation; //thelei malloc? afou kanoume malloc stin build relation
   int j,build_num,k;
   int table;
   int column;
@@ -278,22 +277,24 @@ void show_proboles (inbetween_results inb_results, all_data input_data)
     }
     else
       printf("Error! Char %c appeared\n",token[j]);
-  // result_relation =  build_relation apo inb_results
-  if (result_relation == NULL)
+  if (inbet_list->inbetween_lists[table] == NULL)
     printf("Table.Column %d.%d doesnt have any results.\n",table,column);
   else
     {
       for (k=0;k<result_relation->numTuples;k++)
       {
-        sum += result_relation->tuples->payload;
+        sum += inbet_list->inbetween_lists[table]->tuples->payload;
       }
       printf ("Table.Column %d.%d  sum is %d\n");
     }
   }
 }
+
 int main (void)
 {
   inbetween_results *inb_results = InitInbetResults (1);
+  //to inb_list pos to arxikopoio??
+  Relation * relation,relation2;
   char * tokens[3];
   int i;
   char input[80] = "0 2 4|0.1=1.2&1.0=2.1&2.9>1821|0.0 1.1";
@@ -313,52 +314,72 @@ int main (void)
             {
             if(inbet_list->inbetween_lists[predictes[i]->rel1] != NULL )
               {
-              //  relation = build_relation(inbet_list->inbetween_lists[predictes[i]->rel1],arrays_in_query[predicates[i]->rel1]->columns[col1]);
+                relation = build_relation(inbet_list->inbetween_lists[predictes[i]->rel1],arrays_in_query[predicates[i]->rel1]->columns[predicates[i]->col1]);
               }
             else
               {
-              //relation = arrays_in_query[predicates[i]->rel1]->columns[col1];
+              relation = arrays_in_query[predicates[i]->rel1]->columns[predicates[i]->col1];
               }
-              compute_operation(predicates[i]->op,predicates[i]->col1, relation);
+              compute_operation(predicates[i]->op,predicates[i]->col1, relation,inbet_list->inbetween_lists[predictes[i]->rel1]);
             }
           else if(predicates[i]->rel2==-1) //einai tis morfis relation column op constant
           {
             if(inbet_list->inbetween_lists[predictes[i]->rel1] != NULL )
                 {
-                //  relation = build_relation(inbet_list->inbetween_lists[predictes[i]->rel1],arrays_in_query[predicates[i]->rel1]->columns[col1]);
+                  relation = build_relation(inbet_list->inbetween_lists[predictes[i]->rel2],arrays_in_query[predicates[i]->rel2]->columns[predicates[i]->col2]);
                 }
               else
               {
-                  //relation = arrays_in_query[predicates[i]->rel1]->columns[col1];
+                  relation = arrays_in_query[predicates[i]->rel2]->columns[predicates[i]->col2];
               }
-            compute_operation(predicates[i]->op,predicates[i]->col1, relation);
+            compute_operation(predicates[i]->op,predicates[i]->col1, relation,inbet_list->inbetween_lists[predictes[i]->rel2]);
           }
           else if (predicates[i]->rel1 == predicates[i]->rel2) //join sto idio relation, diladi sarosi (mporei na einai join se alla columns)
           {
-              //build relation 1
-              //build relation 2
-              if (relation1->num_tuples > relation2->num_tuples) //??? exei noima auto?
-                {
-                  for (j=0;j<relation1->num_tuples;j++)
-                  {
-                    compute_operation(predicates[i]->op,relation1->tuples[j]->payload,relation2)
-                  }
-                }
-              else                                            //??? exei noima auto?
-                {
-                  for (j=0;j<relation2->num_tuples;j++)
-                  {
-                    compute_operation(predicates[i]->op,relation2->tuples[j]->payload,relation1)
-                  }
-                }
+              if(inbet_list->inbetween_lists[predictes[i]->rel1] != NULL )
+              {
+                relation = build_relation(inbet_list->inbetween_lists[predictes[i]->rel1],arrays_in_query[predicates[i]->rel1]->columns[predicates[i]->col1]);
+              }
+              else
+              {
+              relation = arrays_in_query[predicates[i]->rel1]->columns[predicates[i]->col1];
+              }
+            if(inbet_list->inbetween_lists[predictes[i]->rel1] != NULL )
+              {
+                relation2 = build_relation(inbet_list->inbetween_lists[predictes[i]->rel2],arrays_in_query[predicates[i]->rel2]->columns[predicates[i]->col2]);
+              }
+              else
+              {
+                relation2 = arrays_in_query[predicates[i]->rel2]->columns[predicates[i]->col2];
+              }
+              //we have built the relations. now compute
+            for (j=0;j<relation->num_tuples;j++)
+            {
+            compute_operation(predicates[i]->op,relation->tuples[j]->payload,relation2,inbet_list->inbetween_lists[predictes[i]->rel1]);
+            }
           }
           else //exw join
           {
-            //build relation 1
-            //build relation 2
-            RadixHashJoin (relation1,relation2);
-            //insert results
+            if(inbet_list->inbetween_lists[predictes[i]->rel1] != NULL )
+            {
+              relation = build_relation(inbet_list->inbetween_lists[predictes[i]->rel1],arrays_in_query[predicates[i]->rel1]->columns[predicates[i]->col1]);
+            }
+            else
+            {
+            relation = arrays_in_query[predicates[i]->rel1]->columns[predicates[i]->col1];
+            }
+          if(inbet_list->inbetween_lists[predictes[i]->rel1] != NULL )
+            {
+              relation2 = build_relation(inbet_list->inbetween_lists[predictes[i]->rel2],arrays_in_query[predicates[i]->rel2]->columns[predicates[i]->col2]);
+            }
+            else
+            {
+              relation2 = arrays_in_query[predicates[i]->rel2]->columns[predicates[i]->col2];
+            }
+            //we have built the relations. now RHJ
+            RadixHashJoin (relation,relation2,inbet_list->inbetween_lists[predictes[i]->rel1]),inbet_list->inbetween_lists[predictes[i]->rel2]);
           }
     }
-  free (corresponding_table);
+    show_proboles(inb_results,input_data); //thelei ligi doulitsa.
+  free (corresponding_table); //to coressponding table xriazete?
 }

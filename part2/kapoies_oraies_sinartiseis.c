@@ -4,63 +4,8 @@
 #include <math.h>
 #include <stdint.h>
 #include <ctype.h>
-#define BUFFERSIZE 100
-
-
-struct tuple{
-  int32_t key;    //rowID
-  int32_t payload;   //value
-};
-typedef struct tuple tuple;
-
-struct Relation{
-  tuple  *tuples;   //pinakas apo tuples
-  uint32_t num_tuples;  //megethos pinaka
-};
-typedef struct Relation Relation;
-
-struct relation_data{
-  uint64_t numColumns;
-  uint64_t numTuples;
-  Relation **columns;     //pinakas apo deiktes stin arxi kathe column
-};
-typedef struct relation_data relation_data;
-
-struct all_data{
-  relation_data ** table;  //array of pointers to relation_data
-  int num_relations;       //number of total relations
-};
-typedef struct all_data all_data;
-
-struct predicates{      /* struct predicates stores info for predicate in query*/
-  int rel1;             /* index of 1st relation in predicate*/
-  int col1;             /* index of column of 1st relation in predicate*/
-  int rel2;             /* index of 2nd relation in predicate*/
-  int col2;             /* index of column of 2nd relation in predicate*/
-  char op[3];           /* operation between the 2 columns */
-};
-
-typedef struct predicates predicates;
-
-struct inbet_node{           /*struct to store inbetween relations*/
-  int rowIDS[BUFFERSIZE];        /*array of rowIDS*/
-  int num_tuples;               /*number of tuples in array*/
-  struct inbet_node *next;          /*pointer to the next node */
-};
-typedef struct inbet_node inbet_node;
-
-struct inbet_list{
-  inbet_node *head;       /*pointer to the head of the list*/
-  inbet_node *current;    /*pointer to the current node of the list*/
-  int total_tuples;       /*total tuples in list*/
-};
-typedef struct inbet_list inbet_list;
-
-struct inbetween_results{
-  inbet_list **inbet_lists; /*array of pointers to lists*/
-  int num_lists;                  /*number of lists*/
-};
-typedef struct inbetween_results inbetween_results;
+#include "structs.h"
+#include "rhj.h"
 
 
 void print_predicates (predicates ** predicates,int num_predicates)
@@ -69,11 +14,11 @@ void print_predicates (predicates ** predicates,int num_predicates)
   for (i=0;i<num_predicates;i++)
     {
       if (predicates[i]->rel1!=-1 && predicates[i]->rel2!=-1)
-      printf("%d.%d%c%d.%d\n",predicates[i]->rel1,predicates[i]->col1,predicates[i]->op[0],predicates[i]->rel2,predicates[i]->col2);
+      printf("%d.%d%c%d.%d\n",predicates[i]->rel1,predicates[i]->col1,predicates[i]->op,predicates[i]->rel2,predicates[i]->col2);
       else if (predicates[i]->rel1==-1)
-      printf("%d%c%d.%d\n",predicates[i]->col1,predicates[i]->op[0],predicates[i]->rel2,predicates[i]->col2);
+      printf("%d%c%d.%d\n",predicates[i]->col1,predicates[i]->op,predicates[i]->rel2,predicates[i]->col2);
       else if (predicates[i]->rel2==-1)
-      printf("%d.%d%c%d\n",predicates[i]->rel1,predicates[i]->col1,predicates[i]->op[0],predicates[i]->col2);
+      printf("%d.%d%c%d\n",predicates[i]->rel1,predicates[i]->col1,predicates[i]->op,predicates[i]->col2);
     }
 }
 
@@ -140,8 +85,7 @@ void  fill_predicates (char * token, int num_predicates, predicates ** predicate
           predicates[i]->rel1=-1;
         }
         flag=1;
-        predicates[i]->op[0] = compute_num[j];
-        predicates[i]->op[1] = 0;
+        predicates[i]->op = compute_num[j];
       }
       if(compute_num[j] == '.' && flag==0)
       {
@@ -203,14 +147,13 @@ relation_data **find_corresponding(char * token,all_data *datatable)
       build_num= make_number(num_length, token, j);
       num_length=0;
       corresponding_table[corresponding_counter] = datatable->table[build_num];
-      printf("%d corresponds to %d\n", corresponding_table[corresponding_counter],corresponding_counter);
       corresponding_counter++;
     }
   }
   return corresponding_table;
 }
 
-void compute_operation (char op, int constant,Relation * relation,inbet_list A)
+void compute_operation(char op, int constant,Relation * relation,inbet_list * A)
 {
   int i;
   if (op == '=')
@@ -245,7 +188,7 @@ void compute_operation (char op, int constant,Relation * relation,inbet_list A)
   }
 }
 
-void show_proboles (inbetween_results inb_results, all_data input_data) //thelei ligi doulitsa
+void show_proboles(inbetween_results *inb_results,all_data *input_data, char * token) //thelei ligi doulitsa
 {
   int j,build_num,k;
   int table;
@@ -262,10 +205,10 @@ void show_proboles (inbetween_results inb_results, all_data input_data) //thelei
     }
     else if (token[j]=='.' && flag == 0)
     {
-        build_num = make_number(num_length, token, j);
-        num_length=0;
-        table = build_num;
-        flag = 1;
+      build_num = make_number(num_length, token, j);
+      num_length=0;
+      table = build_num;
+      flag = 1;
     }
     else if ((token[j]==' ' || token[j] == '\0') && flag == 1)
     {
@@ -275,31 +218,36 @@ void show_proboles (inbetween_results inb_results, all_data input_data) //thelei
       flag = 0;
       printf("Showing %d.%d\n",table,column);
     }
-    else
+    else{
       printf("Error! Char %c appeared\n",token[j]);
-  if (inbet_list->inbetween_lists[table] == NULL)
-    printf("Table.Column %d.%d doesnt have any results.\n",table,column);
-  else
+    }
+    if(inb_results->inbet_lists[table] == NULL)
+      printf("Table.Column %d.%d doesnt have any results.\n",table,column);
+      //to bala se sxolia gia to compile
+/*    else
     {
       for (k=0;k<result_relation->numTuples;k++)
       {
-        sum += inbet_list->inbetween_lists[table]->tuples->payload;
+        sum += inb_results->inbet_list->inbetween_lists[table]->tuples->payload;
       }
       printf ("Table.Column %d.%d  sum is %d\n");
     }
+  }*/
   }
 }
 
 int main (void)
 {
   inbetween_results *inb_results = InitInbetResults(1);
-  Relation * relation,relation2;
+  Relation * relation,* relation2;
+  all_data * datatable;
   char * tokens[3];
   int i;
   char input[80] = "0 2 4|0.1=1.2&1.0=2.1&2.9>1821|0.0 1.1";
+
   seperate_predicate(input,tokens);
   printf("1:%s\n2:%s\n3:%s\n",tokens[0],tokens[1],tokens[2]);
-  relation_data * arrays_in_query= find_corresponding(tokens[0]);
+  relation_data ** arrays_in_query= find_corresponding(tokens[0],datatable);
   int num_predicates = find_num_of_predicates(tokens[1]);
   printf("We have %d predicate\n",num_predicates);
   predicates ** predicates_table = malloc(sizeof(predicates *) * num_predicates);
@@ -308,86 +256,86 @@ int main (void)
   //apo edw kai katw untested kodikas
   for(i=0;i<num_predicates;i++)
   {
-    if(predicates[i]->rel1==-1) //einai tis morfis constant op relation column
+    if(predicates_table[i]->rel1==-1) //einai tis morfis constant op relation column
     {
-      if(inbet_list->inbetween_lists[predicates[i]->rel1] != NULL )
+      if(inb_results->inbet_lists[predicates_table[i]->rel1] != NULL )
       {
-        relation = build_relation(inbet_list->inbetween_lists[predicates[i]->rel1],arrays_in_query[predicates[i]->rel1]->columns[predicates[i]->col1]);
-        ReInitInbetList(inbet_list->inbetween_lists[predicates[i]->rel1]);
-        // free inbet_list->inbetween_lists[predicates[i]->rel1]
+        relation = BuildRelation(inb_results->inbet_lists[predicates_table[i]->rel1],arrays_in_query[predicates_table[i]->rel1]->columns[predicates_table[i]->col1]);
+        ReInitInbetList(inb_results->inbet_lists[predicates_table[i]->rel1]);
+        // free inbet_list->inbetween_lists[predicates_table[i]->rel1]
         //init
       }
       else
       {
-        relation = arrays_in_query[predicates[i]->rel1]->columns[predicates[i]->col1];
+        relation = arrays_in_query[predicates_table[i]->rel1]->columns[predicates_table[i]->col1];
       }
-      compute_operation(predicates[i]->op,predicates[i]->col1, relation,inbet_list->inbetween_lists[predicates[i]->rel1]);
+      compute_operation(predicates_table[i]->op,predicates_table[i]->col1, relation,inb_results->inbet_lists[predicates_table[i]->rel1]);
     }
-    else if(predicates[i]->rel2==-1) //einai tis morfis relation column op constant
+    else if(predicates_table[i]->rel2==-1) //einai tis morfis relation column op constant
     {
-      if(inbet_list->inbetween_lists[predicates[i]->rel1] != NULL )
+      if(inb_results->inbet_lists[predicates_table[i]->rel1] != NULL )
       {
-        relation = build_relation(inbet_list->inbetween_lists[predicates[i]->rel2],arrays_in_query[predicates[i]->rel2]->columns[predicates[i]->col2]);
-        ReInitInbetList(inbet_list->inbetween_lists[predicates[i]->rel2]);
+        relation = BuildRelation(inb_results->inbet_lists[predicates_table[i]->rel2],arrays_in_query[predicates_table[i]->rel2]->columns[predicates_table[i]->col2]);
+        ReInitInbetList(inb_results->inbet_lists[predicates_table[i]->rel2]);
       }
       else
       {
-        relation = arrays_in_query[predicates[i]->rel2]->columns[predicates[i]->col2];
+        relation = arrays_in_query[predicates_table[i]->rel2]->columns[predicates_table[i]->col2];
       }
-      compute_operation(predicates[i]->op,predicates[i]->col1, relation,inbet_list->inbetween_lists[predicates[i]->rel2]);
+      compute_operation(predicates_table[i]->op,predicates_table[i]->col1, relation,inb_results->inbet_lists[predicates_table[i]->rel2]);
     }
-    else if (predicates[i]->rel1 == predicates[i]->rel2) //join sto idio relation, diladi sarosi (mporei na einai join se alla columns)
+    else if (predicates_table[i]->rel1 == predicates_table[i]->rel2) //join sto idio relation, diladi sarosi (mporei na einai join se alla columns)
     {
-      if(inbet_list->inbetween_lists[predicates[i]->rel1] != NULL )
+      if(inb_results->inbet_lists[predicates_table[i]->rel1] != NULL )
       {
-        relation = build_relation(inbet_list->inbetween_lists[predicates[i]->rel1],arrays_in_query[predicates[i]->rel1]->columns[predicates[i]->col1]);
-        ReInitInbetList(inbet_list->inbetween_lists[predicates[i]->rel1]);
+        relation = BuildRelation(inb_results->inbet_lists[predicates_table[i]->rel1],arrays_in_query[predicates_table[i]->rel1]->columns[predicates_table[i]->col1]);
+        ReInitInbetList(inb_results->inbet_lists[predicates_table[i]->rel1]);
       }
       else
       {
-        relation = arrays_in_query[predicates[i]->rel1]->columns[predicates[i]->col1];
+        relation = arrays_in_query[predicates_table[i]->rel1]->columns[predicates_table[i]->col1];
       }
-      if(inbet_list->inbetween_lists[predicates[i]->rel1] != NULL )
+      if(inb_results->inbet_lists[predicates_table[i]->rel1] != NULL )
       {
-        relation2 = build_relation(inbet_list->inbetween_lists[predicates[i]->rel2],arrays_in_query[predicates[i]->rel2]->columns[predicates[i]->col2]);
-        ReInitInbetList(inbet_list->inbetween_lists[predicates[i]->rel2]);
+        relation2 = BuildRelation(inb_results->inbet_lists[predicates_table[i]->rel2],arrays_in_query[predicates_table[i]->rel2]->columns[predicates_table[i]->col2]);
+        ReInitInbetList(inb_results->inbet_lists[predicates_table[i]->rel2]);
 
       }
       else
       {
-        relation2 = arrays_in_query[predicates[i]->rel2]->columns[predicates[i]->col2];
+        relation2 = arrays_in_query[predicates_table[i]->rel2]->columns[predicates_table[i]->col2];
       }
       //we have built the relations. now compute
-      for (j=0;j<relation->num_tuples;j++)
+      for(int j=0;j<relation->num_tuples;j++)
       {
-        compute_operation(predicates[i]->op,relation->tuples[j]->payload,relation2,inbet_list->inbetween_lists[predicates[i]->rel1]);
+        compute_operation(predicates_table[i]->op,relation->tuples[j].payload,relation2,inb_results->inbet_lists[predicates_table[i]->rel1]);
       }
     }
     else //exw join
     {
-      if(inbet_list->inbetween_lists[predicates[i]->rel1] != NULL )
+      if(inb_results->inbet_lists[predicates_table[i]->rel1] != NULL )
       {
-        relation = build_relation(inbet_list->inbetween_lists[predicates[i]->rel1],arrays_in_query[predicates[i]->rel1]->columns[predicates[i]->col1]);
-        ReInitInbetList(inbet_list->inbetween_lists[predicates[i]->rel1]);
+        relation = BuildRelation(inb_results->inbet_lists[predicates_table[i]->rel1],arrays_in_query[predicates_table[i]->rel1]->columns[predicates_table[i]->col1]);
+        ReInitInbetList(inb_results->inbet_lists[predicates_table[i]->rel1]);
 
       }
       else
       {
-        relation = arrays_in_query[predicates[i]->rel1]->columns[predicates[i]->col1];
+        relation = arrays_in_query[predicates_table[i]->rel1]->columns[predicates_table[i]->col1];
       }
-      if(inbet_list->inbetween_lists[predicates[i]->rel1] != NULL )
+      if(inb_results->inbet_lists[predicates_table[i]->rel1] != NULL )
       {
-        relation2 = build_relation(inbet_list->inbetween_lists[predicates[i]->rel2],arrays_in_query[predicates[i]->rel2]->columns[predicates[i]->col2]);
-        ReInitInbetList(inbet_list->inbetween_lists[predicates[i]->rel2]);
+        relation2 = BuildRelation(inb_results->inbet_lists[predicates_table[i]->rel2],arrays_in_query[predicates_table[i]->rel2]->columns[predicates_table[i]->col2]);
+        ReInitInbetList(inb_results->inbet_lists[predicates_table[i]->rel2]);
       }
       else
       {
-        relation2 = arrays_in_query[predicates[i]->rel2]->columns[predicates[i]->col2];
+        relation2 = arrays_in_query[predicates_table[i]->rel2]->columns[predicates_table[i]->col2];
       }
       //we have built the relations. now RHJ
-      RadixHashJoin (relation,relation2,inbet_list->inbetween_lists[predicates[i]->rel1]),inbet_list->inbetween_lists[predicates[i]->rel2]);
+      RadixHashJoin(relation,relation2,inb_results->inbet_lists[predicates_table[i]->rel1],inb_results->inbet_lists[predicates_table[i]->rel2]);
     }
   }
-  show_proboles(inb_results,input_data); //thelei ligi doulitsa.
+//  show_proboles(inb_results,all_data,tokens[2]); //thelei ligi doulitsa.
   free (arrays_in_query); //to coressponding table xriazete?
 }

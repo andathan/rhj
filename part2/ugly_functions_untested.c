@@ -1,17 +1,23 @@
+#include "rhj.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "lists.h"
+
 Relation *BuildRelation(inbet_list *list,Relation *init_relation){
   /* input: list of inbetween results , initial Relation
       output : a Relation with inbetween tuples*/
   int i,c=0;
   Relation *new_relation = (Relation *)malloc(sizeof(Relation));
-  new_relation->tuples = malloc(sizeof(tuple)*head->total);
+  new_relation->tuples = malloc(sizeof(tuple)*list->total_tuples);
   new_relation->num_tuples = list->total_tuples;
 
   inbet_node *current = list->head;
 
   while(current!=NULL){ //for every node in list
     for(i=0;i<current->num_tuples;i++){  //for every rowID in node
-      new_relation[c].key = current->rowIDS[i];
-      new_relation[c].payload = init_relation[new_relation[c].key].payload;
+      new_relation->tuples[c].key = current->rowIDS[i];
+      new_relation->tuples[c].payload = init_relation[new_relation->tuples[c].key].payload;
+      c++;
     }
     current = current->next;
   }

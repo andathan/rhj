@@ -5,9 +5,9 @@ Relation *BuildRelation(inbet_list *list,Relation *init_relation){
   Relation *new_relation = (Relation *)malloc(sizeof(Relation));
   new_relation->tuples = malloc(sizeof(tuple)*head->total);
   new_relation->num_tuples = list->total_tuples;
-  
+
   inbet_node *current = list->head;
-  
+
   while(current!=NULL){ //for every node in list
     for(i=0;i<current->num_tuples;i++){  //for every rowID in node
       new_relation[c].key = current->rowIDS[i];
@@ -53,4 +53,19 @@ void UpdateInbetList(inbet_list *list,int key){
   list->current->rowIDS[list->current->num_tuples]=key;
   list->current->num_tuples++;
   list->total_tuples++;
+}
+
+
+void ReInitInbetList(inbet_list *list){
+  if(list==NULL || list->head==NULL) return;
+  inbet_node *current = list->head;
+  inbet_node *temp = list->head;
+  while(current!=NULL){
+    temp = current;
+    current = current->next;
+    free(temp);
+  }
+  list->total_tuples = 0;
+  list->head=NULL;
+  list->current=NULL;
 }

@@ -58,5 +58,5 @@ int H1(int a,int mask); /*returns given a & mask */
 int *make_histogram(Relation *in_relation); /*returns the histogram table of given relation*/
 int *make_offsets(int *histogram); /*returns the Psum of given relation*/
 Relation * segmentation(Relation *,int *,int *);
-Result *IndexAndResult(int ,int ,int ,int ,Relation *,Relation *,Result *);
-Result *RadixHashJoin(Relation *, Relation *);
+void IndexAndResult(int ,int ,int ,int ,Relation *,Relation *,inbet_list *,inbet_list *);
+void RadixHashJoin(Relation *, Relation *,inbet_list *,inbet_list *);

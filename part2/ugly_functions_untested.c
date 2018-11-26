@@ -16,7 +16,7 @@ Relation *BuildRelation(inbet_list *list,Relation *init_relation){
   while(current!=NULL){ //for every node in list
     for(i=0;i<current->num_tuples;i++){  //for every rowID in node
       new_relation->tuples[c].key = current->rowIDS[i];
-      new_relation->tuples[c].payload = init_relation[new_relation->tuples[c].key].payload;
+      new_relation->tuples[c].payload = init_relation->tuples[new_relation->tuples[c].key].payload;
       c++;
     }
     current = current->next;
@@ -31,6 +31,7 @@ inbetween_results *InitInbetResults(int n){
   inbetween_results *results = malloc(sizeof(inbetween_results));
   results->num_lists=n;
   results->inbet_lists = malloc(sizeof(inbet_list *)*results->num_lists);
+  printf(" num lists = %d\n",results->num_lists );
   for(i=0;i<results->num_lists;i++){
     results->inbet_lists[i] = ( inbet_list * ) malloc(sizeof(inbet_list));
     results->inbet_lists[i]->head=NULL;

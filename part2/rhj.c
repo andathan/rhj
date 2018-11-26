@@ -50,18 +50,27 @@ Relation* segmentation(Relation *in_relation,int *histogram,int *offsets){
 }
 
 
-Result *IndexAndResult(int index_tuples,int comp_tuples,int index_Psum,int comp_Psum,Relation *indexRel,Relation *compRel,Result *results){
+void IndexAndResult(int index_tuples,int comp_tuples,int index_Psum,int comp_Psum,Relation *indexRel,Relation *compRel,inbet_list *index_list,inbet_list *comp_list){
 
   int j,k,rowID,hash_key,new,previoys,key1,key2,payload1,payload2,range_hashfunction,previous;
-  int *chain=NULL , *hashtable=NULL;
+  int *chain=NULL , *hashtable=NULL , *index_flags=NULL , *comp_flags=NULL;
 
-  if(index_tuples==0) return results;
+  if(index_tuples==0) return ;
 
   range_hashfunction=getnextodd(index_tuples);
 
   chain = (int *)malloc(sizeof(int)*index_tuples);
-  for(k=0;k<index_tuples;k++)
+  index_flags = (int *)malloc(sizeof(int)*index_tuples);
+  for(k=0;k<index_tuples;k++){
     chain[k] = -1;
+    index_flags[k]=-1;
+  }
+
+  comp_flags = (int *)malloc(sizeof(int)*comp_tuples);
+  for(k=0;k<comp_tuples;k++){
+    comp_flags[k]=-1;
+  }
+
 
   hashtable = (int *)malloc(sizeof(int)*range_hashfunction);
   for (k=0;k<range_hashfunction;k++)
@@ -85,18 +94,27 @@ Result *IndexAndResult(int index_tuples,int comp_tuples,int index_Psum,int comp_
       if (payload1==payload2){
         key1=indexRel->tuples[index_Psum+rowID].key;
         key2=compRel->tuples[comp_Psum+j].key;
-        InsertResult(results,key1,key2);
+        if(index_flags[key1]==-1){
+          UpdateInbetList(index_list,key1);
+          index_flags[key1]=0;
+        }
+        if(comp_flags[key2]==-1){
+          UpdateInbetList(comp_list,key2);
+          index_flags[key2]=0;
+        }
+//        InsertResult(results,key1,key2);
       }
       rowID = chain[rowID];//pairnw tin proigoumeni eggrafi meso tou chain
     }
   }
   free(hashtable);
   free(chain);
-  return results;
+  free(comp_flags);
+  free(index_flags);
 }
 
 
-Result* RadixHashJoin(Relation *relR, Relation *relS){
+void RadixHashJoin(Relation *relR, Relation *relS,inbet_list *listR,inbet_list *listS){
   int num_of_buckets = pow(2,N);
   Relation *relS_seg , *relR_seg;
   int *histogram_R,*histogram_S,*Psum_R,*Psum_S;
@@ -119,9 +137,9 @@ Result* RadixHashJoin(Relation *relR, Relation *relS){
 
   for (i=0;i<num_of_buckets;i++){
     if (histogram_R[i]<histogram_S[i]){
-      results = IndexAndResult(histogram_R[i],histogram_S[i],Psum_R[i],Psum_S[i],relR_seg,relS_seg,results);
+      IndexAndResult(histogram_R[i],histogram_S[i],Psum_R[i],Psum_S[i],relR_seg,relS_seg,listR,listS);
     }else{
-      results = IndexAndResult(histogram_S[i],histogram_R[i],Psum_S[i],Psum_R[i],relS_seg,relR_seg,results);
+      IndexAndResult(histogram_S[i],histogram_R[i],Psum_S[i],Psum_R[i],relS_seg,relR_seg,listS,listR);
     }
   }
   free(histogram_R);
@@ -132,5 +150,4 @@ Result* RadixHashJoin(Relation *relR, Relation *relS){
   free(relR_seg->tuples);
   free (relS_seg);
   free (relR_seg);
-  return results;
 }

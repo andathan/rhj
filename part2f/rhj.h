@@ -14,8 +14,8 @@ typedef struct inbet_list inbet_list;
 typedef struct inbetween_results inbetween_results;
 
 struct tuple{
-  int32_t key;    //rowID
-  int32_t payload;   //value
+  uint64_t key;    //rowID
+  uint64_t payload;   //value
 };
 typedef struct tuple tuple;
 
@@ -62,7 +62,7 @@ Relation *BuildRelation(inbet_list *list,Relation *init_relation);
 
 relation_data **find_corresponding(char * token,all_data *datatable,int *num_relations);
 void compute_operation(char op, int constant,Relation * relation,inbet_list * A);
-void show_results(inbetween_results *inb_results,all_data *input_data, char * token);
+void show_results(inbetween_results *inb_results,relation_data **input_data, char * token);
 relation_data *parsefile(char * filename);
 
 #endif

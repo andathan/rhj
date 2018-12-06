@@ -38,14 +38,16 @@ relation_data **find_corresponding(char * token,all_data *datatable,int *num_rel
 
 void compute_operation(char op,int constant,Relation *relation,inbet_list *A)
 {
+
   int i;
   if (op == '=')
   {
     for (i=0;i<relation->num_tuples;i++)
     {
-      if (relation->tuples->payload == constant)
+      if (relation->tuples[i].payload == constant)
       {
-        UpdateInbetList (A, relation->tuples->key);
+        printf(" %ju == %d \n",relation->tuples[i].payload,constant );
+        InsertInbetList (A, relation->tuples[i].key);
       }
     }
   }
@@ -53,9 +55,9 @@ void compute_operation(char op,int constant,Relation *relation,inbet_list *A)
   {
     for (i=0;i<relation->num_tuples;i++)
     {
-      if (relation->tuples->payload > constant)
+      if (relation->tuples[i].payload > constant)
       {
-        UpdateInbetList(A, relation->tuples->key);
+        InsertInbetList(A, relation->tuples[i].key);
       }
     }
   }
@@ -63,22 +65,27 @@ void compute_operation(char op,int constant,Relation *relation,inbet_list *A)
   {
     for (i=0;i<relation->num_tuples;i++)
     {
-      if (relation->tuples->payload < constant)
+      if (relation->tuples[i].payload < constant)
       {
-        UpdateInbetList (A, relation->tuples->key);
+        InsertInbetList (A, relation->tuples[i].key);
       }
     }
   }
+  printf("num of tuples after == %d\n",A->head->num_tuples );
 }
 
-int sum(inbet_list *list,Relation *rel){
+uint64_t sum(inbet_list *list,Relation *rel){
   /*computes the summary of the relation rel according to keys in list  *
    *  returns sum                                                         */
-   int i,sum=0;
-  inbet_node *current = list->head;
-  while(current!=NULL){
+   int i;
+   uint64_t sum=0;
+   inbet_node *current = list->head;
+   printf("sum\n");
+   while(current!=NULL){
     /*for every key in list , add its value to sum*/
+    printf("current->num_tuples = %d \n",current->num_tuples);
     for(i=0;i<current->num_tuples;i++){
+//      printf("[%d]\n",current->rowIDS[i]);
       sum += rel->tuples[current->rowIDS[i]].payload;
     }
     current=current->next;
@@ -87,18 +94,20 @@ int sum(inbet_list *list,Relation *rel){
 }
 
 
-void show_results(inbetween_results *res,all_data *data, char * token) //thelei ligi doulitsa
+void show_results(inbetween_results *res,relation_data **data, char * token) //thelei ligi doulitsa
 {
   /**/
   char *relcol = strtok(token," ");
-  int rel,col,col_sum;
+  int rel,col;
+  uint64_t col_sum;
   while(relcol!=NULL){
     sscanf(relcol,"%d.%d",&rel,&col);
+    //printf("Requesting %d.%d\n",rel,col);
     if(res->inbet_lists[rel]->head==NULL){
       printf("NULL\n");
     }else{
-      col_sum = sum(res->inbet_lists[rel],data->table[rel]->columns[col]);
-      printf("~%d\n",col_sum );
+      col_sum = sum(res->inbet_lists[rel],data[rel]->columns[col]);
+      printf("~%ju\n",col_sum );
     }
     relcol = strtok(NULL," ");
   }
@@ -109,6 +118,7 @@ relation_data *parsefile(char * filename){
   uint64_t num;
   uint64_t numofColumns;
   uint64_t numofTuples;
+
 
   FILE *fp = fopen(filename,"rb");
   if (fp==NULL) {
@@ -126,11 +136,15 @@ relation_data *parsefile(char * filename){
   }
   printf("%ju\n",numofTuples );
   printf("%ju\n",numofColumns );
+  r2data->numColumns = numofColumns;
+  r2data->numTuples = numofTuples;
+  char c;
   for(int i=0;i<numofColumns;i++){
     for(int j=0;j<numofTuples;j++){
-      fread(&(r2data->columns[i]->tuples[j].payload),sizeof(int32_t),1,fp);
+      fread(&(r2data->columns[i]->tuples[j].payload),sizeof(uint64_t),1,fp);
       r2data->columns[i]->tuples[j].key = j;
     }
+    r2data->columns[i]->num_tuples = numofTuples;
   }
   /*for(int i=0;i<numofColumns;i++){
     for(int j=0;j<numofTuples;j++){

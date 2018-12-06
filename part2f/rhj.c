@@ -186,6 +186,7 @@ Relation *BuildRelation(inbet_list *list,Relation *init_relation){
   inbet_node *current = list->head;
   int node=0,c=0;
 
+  printf("build relation :%d total_tuples\n",list->total_tuples );
   while(current!=NULL){ //for every node in list
     for(i=0;i<current->num_tuples;i++){  //for every rowID in node
       new_relation->tuples[c].key = c;  /*pernao san key to index tis endiamesis domis*/

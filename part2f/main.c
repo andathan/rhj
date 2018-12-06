@@ -9,7 +9,7 @@ int main (void)
   Relation * relation,* relation2;
   char * tokens[3];
   int i;
-  char input[80] = "11 0 5|0.2=1.0&1.0=2.2&0.1=5784|2.3 0.1 0.1";
+  char input[80] = "9 0 2|0.1=1.0&1.0=2.2&0.0>12472|1.0 0.3 0.4";
   char *filename=NULL;
   size_t linesize;
 
@@ -116,8 +116,9 @@ int main (void)
         printf("BuildRelation\n");
       }
       if(predicates_table[i]->op=='='){
-        printf("kano join\n" );
         RadixHashJoin(rel1,rel2,result1,result2);
+        printf("kano join\n" );
+        printf("total tuples tou 2: %d\n",result2->total_tuples );
         inb_results=UpdateInbetList(inb_results,result1,result2,r1,r2);
         printf("---> %d\n",inb_results->inbet_lists[r2]->joined );
       }else{

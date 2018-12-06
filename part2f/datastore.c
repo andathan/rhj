@@ -5,28 +5,22 @@
 #include <ctype.h>
 
 
-relation_data **find_corresponding(char * token,all_data *datatable,int *num_relations)
-{
+relation_data **find_corresponding(char * token,all_data *datatable,int *num_relations){
   int j,build_num,counter,num_length,corresponding_counter=0;
   relation_data **corresponding_table=NULL;
     //first find how many relations we have
   *num_relations=1;
-  for (j=0;j<=strlen(token);j++)
-  {
-    if (isspace(token[j]))
-    {
+  for (j=0;j<=strlen(token);j++){
+    if (isspace(token[j])){
       (*num_relations)++;
     }
   }
   corresponding_table =(relation_data **)malloc(sizeof(relation_data *)*(*num_relations));
-  for (j=0;j<=strlen(token);j++)
-  {
-    if (!isspace(token[j]) && token[j]!=0)
-    {
+  for (j=0;j<=strlen(token);j++){
+    if (!isspace(token[j]) && token[j]!=0){
       num_length++;
     }
-    else
-    {
+    else{
       build_num= make_number(num_length, token, j);
       num_length=0;
       corresponding_table[corresponding_counter] = datatable->table[build_num];
@@ -36,42 +30,30 @@ relation_data **find_corresponding(char * token,all_data *datatable,int *num_rel
   return corresponding_table;
 }
 
-void compute_operation(char op,int constant,Relation *relation,inbet_list *A)
-{
-
+void compute_operation(char op,int constant,Relation *relation,inbet_list *A){
   int i;
-  if (op == '=')
-  {
-    for (i=0;i<relation->num_tuples;i++)
-    {
-      if (relation->tuples[i].payload == constant)
-      {
+  if (op == '='){
+    for (i=0;i<relation->num_tuples;i++){
+      if (relation->tuples[i].payload == constant){
         printf(" %ju == %d \n",relation->tuples[i].payload,constant );
         InsertInbetList (A, relation->tuples[i].key);
       }
     }
   }
-  else if (op == '>')
-  {
-    for (i=0;i<relation->num_tuples;i++)
-    {
-      if (relation->tuples[i].payload > constant)
-      {
+  else if (op == '>'){
+    for (i=0;i<relation->num_tuples;i++){
+      if (relation->tuples[i].payload > constant){
         InsertInbetList(A, relation->tuples[i].key);
       }
     }
   }
-  else if (op =='<')
-  {
-    for (i=0;i<relation->num_tuples;i++)
-    {
-      if (relation->tuples[i].payload < constant)
-      {
+  else if (op =='<'){
+    for (i=0;i<relation->num_tuples;i++){
+      if (relation->tuples[i].payload < constant){
         InsertInbetList (A, relation->tuples[i].key);
       }
     }
   }
-  printf("num of tuples after == %d\n",A->head->num_tuples );
 }
 
 uint64_t sum(inbet_list *list,Relation *rel){
@@ -106,6 +88,7 @@ void show_results(inbetween_results *res,relation_data **data, char * token) //t
     if(res->inbet_lists[rel]->head==NULL){
       printf("NULL\n");
     }else{
+      printf("rel = %d , col = %d \n",rel , col );
       col_sum = sum(res->inbet_lists[rel],data[rel]->columns[col]);
       printf("~%ju\n",col_sum );
     }

@@ -10,7 +10,6 @@ relation_data **find_corresponding(query *in_query,all_data *datatable){
   relation_data **corresponding_table=NULL;
     //first find how many relations we have
   corresponding_table =(relation_data **)malloc(sizeof(relation_data *)*(in_query->num_of_relations));
-  printf("sxeseis : %s , %d\n",in_query->sxeseis,in_query->num_of_relations );
   for (j=0;j<=strlen(in_query->sxeseis);j++){
     if (!isspace(in_query->sxeseis[j]) && in_query->sxeseis[j]!=0){
       num_length++;
@@ -20,6 +19,7 @@ relation_data **find_corresponding(query *in_query,all_data *datatable){
       num_length=0;
       printf("rel id %d\n",build_num );
       corresponding_table[corresponding_counter] = datatable->table[build_num];
+      printf("counter : %d // %d\n",datatable->table[build_num]->columns[0]->num_tuples,corresponding_table[corresponding_counter]->columns[0]->num_tuples );
       corresponding_counter++;
     }
   }
@@ -38,6 +38,7 @@ void compute_operation(char op,int constant,Relation *relation,inbet_list *A){
   }
   else if (op == '>'){
     for (i=0;i<relation->num_tuples;i++){
+      printf("-");
       if (relation->tuples[i].payload > constant){
         InsertInbetList(A, relation->tuples[i].key);
       }
@@ -113,6 +114,7 @@ relation_data *parsefile(char * filename){
   for(int i=0;i<numofColumns;i++){
     r2data->columns[i] =(Relation *)malloc(sizeof(Relation));
     r2data->columns[i]->tuples = (tuple *)malloc(sizeof(tuple)*numofTuples);
+    r2data->columns[i]->num_tuples = numofTuples;
   }
   printf("%ju\n",numofTuples );
   printf("%ju\n",numofColumns );

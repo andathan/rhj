@@ -48,12 +48,14 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
     rel1 = relations[pred->rel1]->columns[pred->col1];
     if(inb_res->inbet_lists[pred->rel1]->head==NULL){
       relation = rel1;
+
     }else{
       relation = BuildRelation(inb_res->inbet_lists[pred->rel1],rel1);
     }
     result1 = InitInbetList();
     compute_operation(pred->op,pred->col2,relation,result1);
     inb_res = UpdateInbetList2(inb_res,result1,pred->rel1);
+    printf("tuples after filter:%d\n",result1->total_tuples );
   }else if(pred->rel1==pred->rel2){
     printf("%d==%d\n", pred->rel1,pred->rel2);
     //edo prepei na mpei isotita pinakwn - kalitera se sinartisi
@@ -69,8 +71,10 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
     result1 = InitInbetList();
     result2 = InitInbetList();
     if(pred->op=='='){
+      printf("radix\n");
       RadixHashJoin(rel1,rel2,result1,result2);
       inb_res=UpdateInbetList(inb_res,result1,result2,pred->rel1,pred->rel2);
+      printf("inb_res %d tuples after rhj\n",result1->total_tuples );
     }else{
       //edo prepei na mpoun ta > , < metaksi pinakwn - sinartisi
       printf("%c\n",pred->op );
@@ -82,10 +86,18 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
 
 void execute_query(query *in_query,all_data *data){
   relation_data **relations = find_corresponding(in_query,data);
+  for(int i=0;i<in_query->num_of_relations;i++){
+    printf("relation %d ,tuples %d,columns %d\n",i,relations[i]->numTuples,relations[i]->numColumns );
+    for(int j=0;j<relations[i]->numColumns;j++){
+      printf("%d - ", relations[i]->columns[j]->num_tuples);
+    }
+  }
   int next_pred ;
   inbetween_results *inb_res=InitInbetResults(in_query->num_of_relations);
   for(int i=0;i<in_query->num_of_predicates;i++){
     next_pred = select_predicate(in_query->num_of_predicates,in_query->katigorimata,relations);
+    printf("predicate %d will be executed\n",next_pred );
+    printf("%d %d %c %d %d \n",in_query->katigorimata[next_pred]->rel1,in_query->katigorimata[next_pred]->col1,in_query->katigorimata[next_pred]->op,in_query->katigorimata[next_pred]->rel2,in_query->katigorimata[next_pred]->col2 );
     inb_res = execute_predicate(in_query->katigorimata[next_pred],relations,inb_res);
     in_query->katigorimata[next_pred]->op= '.';
   }

@@ -144,6 +144,7 @@ void InsertInbetList(inbet_list *list,int key){
     list->head = InitInbetNode();
     list->current = list->head;
   }else if(list->current->num_tuples==BUFFERSIZE-1){ /*current buffer is full*/
+    printf("deutero node\n");
     list->current->next = InitInbetNode();
     list->current = list->current->next;
   }

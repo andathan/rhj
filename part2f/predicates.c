@@ -40,7 +40,7 @@ void print_predicates (predicates ** predicates,int num_predicates)
 
 int make_number (int num_length,char * compute_num, int j)
 {
-  int k;
+  int k=1;
   int build_num=0;
   for (k=num_length;k>1;k--)
   {
@@ -71,6 +71,10 @@ predicates **fill_predicates (char * token, int num_predicates)
     printf("Checking query %s\n",query);
     for(j=0;j<strlen(compute_num);j++)
     {
+      if (compute_num[j] == ' ')
+      {
+        continue;
+      }
       if(compute_num[j]>='0' && compute_num[j]<='9')
         num_length++;
       if (compute_num[j] == '>' || compute_num[j] == '<' || compute_num[j] == '=')

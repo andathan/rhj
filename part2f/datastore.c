@@ -98,10 +98,11 @@ void show_results(inbetween_results *res,relation_data **data, char * token) //t
 
 relation_data *parsefile(char * filename){
 
-  uint64_t num;
+  uint64_t num=0;
   uint64_t numofColumns;
   uint64_t numofTuples;
-
+  int sum,max,min;
+  int average;
 
   FILE *fp = fopen(filename,"rb");
   if (fp==NULL) {
@@ -123,16 +124,40 @@ relation_data *parsefile(char * filename){
   r2data->numTuples = numofTuples;
   char c;
   for(int i=0;i<numofColumns;i++){
+    r2data->columns[i]->min = 999999; //arxikopoihsh se enan megalo arithmo
+    r2data->columns[i]->max = 0;
+    r2data->columns[i]->spread=0;
     for(int j=0;j<numofTuples;j++){
-      fread(&(r2data->columns[i]->tuples[j].payload),sizeof(uint64_t),1,fp);
+      fread(&(num),sizeof(uint64_t),1,fp);
+      r2data->columns[i]->tuples[j].payload=num;
       r2data->columns[i]->tuples[j].key = j;
+      if (num<r2data->columns[i]->min)
+      {
+        r2data->columns[i]->min=num;
+      }
+      if (num>r2data->columns[i]->max)
+      {
+        r2data->columns[i]->max=num;
+      }
     }
-    r2data->columns[i]->num_tuples = numofTuples;
+    //calculate column spread
+    sum=0;
+      for(int j=0;j<numofTuples;j++)
+      {
+        sum += r2data->columns[i]->tuples[j].payload;
+      }
+      average = sum/numofTuples;
+      for(int j=0;j<numofTuples;j++)
+      {
+        sum = (r2data->columns[i]->tuples[j].payload - average) * (r2data->columns[i]->tuples[j].payload - average); //sto tetragono
+      }
+      r2data->columns[i]->spread = sqrt(sum/numofTuples-1);
   }
+
   /*for(int i=0;i<numofColumns;i++){
     for(int j=0;j<numofTuples;j++){
       printf("%d |%d\n", r2data->columns[i]->tuples[j].key,r2data->columns[i]->tuples[j].payload);
     }
   }*/
   return r2data;
-}
+  }

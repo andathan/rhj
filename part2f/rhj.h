@@ -22,6 +22,9 @@ typedef struct tuple tuple;
 struct Relation{
   tuple  *tuples;   //pinakas apo tuples
   uint32_t num_tuples;  //megethos pinaka
+  int max;
+  int min;
+  int spread;
 };
 typedef struct Relation Relation;
 

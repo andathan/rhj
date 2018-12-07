@@ -6,12 +6,14 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
+#include "predicates.h"
 
 #define N 3
 #define SIZE 1000
 
 typedef struct inbet_list inbet_list;
 typedef struct inbetween_results inbetween_results;
+typedef struct query query;
 
 struct tuple{
   uint64_t key;    //rowID
@@ -63,7 +65,7 @@ Relation *BuildRelation(inbet_list *list,Relation *init_relation);
 
 /*body of functions in datastore.c*/
 
-relation_data **find_corresponding(char * token,all_data *datatable,int *num_relations);
+relation_data **find_corresponding(query *,all_data *datatable);
 void compute_operation(char op, int constant,Relation * relation,inbet_list * A);
 void show_results(inbetween_results *inb_results,relation_data **input_data, char * token);
 relation_data *parsefile(char * filename);

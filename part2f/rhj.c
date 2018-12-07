@@ -120,8 +120,8 @@ void RadixHashJoin(Relation *relR, Relation *relS,inbet_list *res1,inbet_list *r
   free(Psum_R);
   Psum_R=make_offsets(histogram_R);
 
-  for (i=0;i<num_of_buckets;i++){
-    if (histogram_R[i]<histogram_S[i]){
+  for(i=0;i<num_of_buckets;i++){
+    if(histogram_R[i]<histogram_S[i]){
       IndexAndResult(histogram_R[i],histogram_S[i],Psum_R[i],Psum_S[i],relR_seg,relS_seg,res1,res2);
     }else{
       IndexAndResult(histogram_S[i],histogram_R[i],Psum_S[i],Psum_R[i],relS_seg,relR_seg,res2,res1);

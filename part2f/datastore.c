@@ -5,24 +5,20 @@
 #include <ctype.h>
 
 
-relation_data **find_corresponding(char * token,all_data *datatable,int *num_relations){
+relation_data **find_corresponding(query *in_query,all_data *datatable){
   int j,build_num,counter,num_length,corresponding_counter=0;
   relation_data **corresponding_table=NULL;
     //first find how many relations we have
-  *num_relations=1;
-  for (j=0;j<=strlen(token);j++){
-    if (isspace(token[j])){
-      (*num_relations)++;
-    }
-  }
-  corresponding_table =(relation_data **)malloc(sizeof(relation_data *)*(*num_relations));
-  for (j=0;j<=strlen(token);j++){
-    if (!isspace(token[j]) && token[j]!=0){
+  corresponding_table =(relation_data **)malloc(sizeof(relation_data *)*(in_query->num_of_relations));
+  printf("sxeseis : %s , %d\n",in_query->sxeseis,in_query->num_of_relations );
+  for (j=0;j<=strlen(in_query->sxeseis);j++){
+    if (!isspace(in_query->sxeseis[j]) && in_query->sxeseis[j]!=0){
       num_length++;
     }
     else{
-      build_num= make_number(num_length, token, j);
+      build_num= make_number(num_length, in_query->sxeseis, j);
       num_length=0;
+      printf("rel id %d\n",build_num );
       corresponding_table[corresponding_counter] = datatable->table[build_num];
       corresponding_counter++;
     }
@@ -92,7 +88,7 @@ void show_results(inbetween_results *res,relation_data **data, char * token) //t
       col_sum = sum(res->inbet_lists[rel],data[rel]->columns[col]);
       printf("~%ju\n",col_sum );
     }
-    relcol = strtok(NULL," ");
+    relcol = strtok(NULL," \n");
   }
 }
 

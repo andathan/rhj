@@ -23,12 +23,12 @@ inbetween_results *InitInbetResults(int n){
   inbetween_results *results = malloc(sizeof(inbetween_results));
   results->num_lists=n;
   results->inbet_lists = malloc(sizeof(inbet_list *)*results->num_lists);
-  printf(" num lists = %d\n",results->num_lists );
   for(i=0;i<results->num_lists;i++){
     results->inbet_lists[i] = InitInbetList();
   }
   return results;
 }
+
 int divi(int num1,int num2,int *div , int *mod){
   *div=0;
   while(num1>=num2){
@@ -58,31 +58,26 @@ inbetween_results *UpdateInbetList(inbetween_results *inb_results,inbet_list *re
   inbetween_results *new_inb_res;
   inbet_node *current;
   inbet_list *previous_res,*new_res;
+  int value;
+
   if(inb_results == NULL) return NULL;
+
   if(inb_results->inbet_lists[rel1]->joined==-1 && inb_results->inbet_lists[rel2]->joined==-1){ //
-    printf("prepei na mai sto proto predicate allios exo lathos\n");
     inb_results->inbet_lists[rel1] = result1;
     inb_results->inbet_lists[rel2] = result2;
     inb_results->inbet_lists[rel1]->joined =1;
     inb_results->inbet_lists[rel2]->joined =1;
-    printf("updated , first predicate , %d , %d\n",rel1,rel2);
     return inb_results;
   }else{  //uparxoun apotelesmata kai prepei na kano antistoixisi
     new_inb_res = InitInbetResults(inb_results->num_lists);
-    printf("rel = %d , i have %d relations in total\n",rel1,inb_results->num_lists );
     if(inb_results->inbet_lists[rel1]->joined==1){
-      printf("%d got joined and has previous , so i take its index\n",rel1 );
       previous_res = result1;
     }else if(inb_results->inbet_lists[rel2]->joined==1){
-      printf("%d got joined and has previous , so i take its index\n",rel1 );
       previous_res = result2;
     }
 
-
-    int value;
     for(i=0;i<inb_results->num_lists;i++){
       if(inb_results->inbet_lists[i]->joined==1){   //rel j has previous results
-        printf("%d relation has previous results so it gets updated\n",i );
         current = previous_res->head;
         while(current!=NULL){
           for(j=0;j<current->num_tuples;j++){
@@ -97,35 +92,34 @@ inbetween_results *UpdateInbetList(inbetween_results *inb_results,inbet_list *re
 
     if(inb_results->inbet_lists[rel1]->joined==-1){ //if rel1 has no previous , results are results from join
       printf("%d got joined and has no previous , so it takes its results\n",rel1 );
+      new_inb_res->inbet_lists[rel1]->joined =1;
       new_inb_res->inbet_lists[rel1] = result1;
+      //free result2
     }
     if(inb_results->inbet_lists[rel2]->joined==-1){
       printf("%d got joined and has no previous , so it takes its results\n",rel2 );
       new_inb_res->inbet_lists[rel2] = result2;
-      printf("total tuples tou 2: %d , %d\n",result2->total_tuples,inb_results->inbet_lists[rel2]->total_tuples );
+      new_inb_res->inbet_lists[rel2]->joined =1;
+      //free result1
     }
 
-    new_inb_res->inbet_lists[rel1]->joined =1;
-    new_inb_res->inbet_lists[rel2]->joined =1;
-    printf("updated relations : %d , %d\n",rel1,rel2);
-    printf("new_inb results has %d entries but actual results have %d\n",new_inb_res->inbet_lists[2]->total_tuples,previous_res->total_tuples );
     FreeInbetList(inb_results);
     return new_inb_res;
   }
 }
 
 inbetween_results *UpdateInbetList2(inbetween_results *inb_results,inbet_list *results,int rel_id){
-  inbetween_results *new_inb_res = InitInbetResults(inb_results->num_lists);
+  inbetween_results *new_inb_res;
   Relation *old_keys,*new_keys;
   inbet_node *current;
   int pos,key;
+  int value;
   if(inb_results->inbet_lists[rel_id]->joined==-1){
     inb_results->inbet_lists[rel_id] = results;
     inb_results->inbet_lists[rel_id]->joined=1;
-    printf("wtf??\n" );
     return inb_results;
   }else{
-    int value;
+    new_inb_res = InitInbetResults(inb_results->num_lists);
     for(int i=0;i<inb_results->num_lists;i++){
       printf("%d relation is joined and gets updated\n",i);
       if(inb_results->inbet_lists[i]->joined==1){   //rel j has previous results
@@ -133,7 +127,7 @@ inbetween_results *UpdateInbetList2(inbetween_results *inb_results,inbet_list *r
         while(current!=NULL){
           for(int j=0;j<current->num_tuples;j++){
             value = GetValue(inb_results->inbet_lists[i],current->rowIDS[j]);
-            printf("key to be isnerted:%d\n",current->rowIDS[j]);
+            printf("key to be inserted:%d\n",current->rowIDS[j]);
             InsertInbetList(new_inb_res->inbet_lists[i],value);
           }
           current=current->next;

@@ -1,5 +1,10 @@
 #ifndef _PREDICATES_H__
 #define _PREDICATES_H__
+#include "rhj.h"
+#include "inbetween.h"
+
+typedef struct relation_data relation_data;
+typedef struct all_data all_data;
 
 struct predicates{      /* struct predicates stores info for predicate in query*/
   int rel1;             /* index of 1st relation in predicate*/
@@ -10,10 +15,32 @@ struct predicates{      /* struct predicates stores info for predicate in query*
 };
 typedef struct predicates predicates;
 
+struct query{
+  char * sxeseis;
+  char * proboles;
+  predicates ** katigorimata;
+  int num_of_predicates;
+  int num_of_relations;
+};
+
+typedef struct query query;
+
+struct batch{
+    query ** queries_table;
+    int num_of_queries;
+};
+
+typedef struct batch batch;
+
+batch *InitBatch();
+batch *AddToBatch();
+void FreeBatch(batch *b);
+
 void seperate_predicate (char * input, char * tokens[3]);
 void print_predicates (predicates ** predicates,int num_predicates);
 int find_num_of_predicates (char * token);
 int make_number (int num_length,char * compute_num, int j);
 predicates **fill_predicates (char * token, int num_predicates);
-
+int select_predicate (int , predicates **,relation_data **);
+void execute_query(query *in_query,all_data *data);
 #endif

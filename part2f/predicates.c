@@ -22,7 +22,6 @@ batch *AddToBatch(batch *my_batch,char **tokens){
   my_batch->queries_table = realloc(my_batch->queries_table,sizeof(query*)*(my_batch->num_of_queries+1));
   my_batch->queries_table[my_batch->num_of_queries] = (query *)malloc(sizeof(query));
   my_batch->queries_table[my_batch->num_of_queries]->sxeseis = tokens[0];
-  printf("sxeseis %s\n",tokens[0] );
   my_batch->queries_table[my_batch->num_of_queries]->proboles = tokens[2];
   num_predicates = find_num_of_predicates(tokens[1]);
   my_batch->queries_table[my_batch->num_of_queries]->num_of_predicates = num_predicates;
@@ -55,7 +54,6 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
     result1 = InitInbetList();
     compute_operation(pred->op,pred->col2,relation,result1);
     inb_res = UpdateInbetList2(inb_res,result1,pred->rel1);
-    printf("tuples after filter:%d\n",result1->total_tuples );
   }else if(pred->rel1==pred->rel2){
     printf("%d==%d\n", pred->rel1,pred->rel2);
     //edo prepei na mpei isotita pinakwn - kalitera se sinartisi
@@ -71,10 +69,8 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
     result1 = InitInbetList();
     result2 = InitInbetList();
     if(pred->op=='='){
-      printf("radix\n");
       RadixHashJoin(rel1,rel2,result1,result2);
       inb_res=UpdateInbetList(inb_res,result1,result2,pred->rel1,pred->rel2);
-      printf("inb_res %d tuples after rhj\n",result1->total_tuples );
     }else{
       //edo prepei na mpoun ta > , < metaksi pinakwn - sinartisi
       printf("%c\n",pred->op );
@@ -87,16 +83,13 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
 void execute_query(query *in_query,all_data *data){
   relation_data **relations = find_corresponding(in_query,data);
   for(int i=0;i<in_query->num_of_relations;i++){
-    printf("relation %d ,tuples %d,columns %d\n",i,relations[i]->numTuples,relations[i]->numColumns );
     for(int j=0;j<relations[i]->numColumns;j++){
-      printf("%d - ", relations[i]->columns[j]->num_tuples);
     }
   }
   int next_pred ;
   inbetween_results *inb_res=InitInbetResults(in_query->num_of_relations);
   for(int i=0;i<in_query->num_of_predicates;i++){
     next_pred = select_predicate(in_query->num_of_predicates,in_query->katigorimata,relations);
-    printf("predicate %d will be executed\n",next_pred );
     printf("%d %d %c %d %d \n",in_query->katigorimata[next_pred]->rel1,in_query->katigorimata[next_pred]->col1,in_query->katigorimata[next_pred]->op,in_query->katigorimata[next_pred]->rel2,in_query->katigorimata[next_pred]->col2 );
     inb_res = execute_predicate(in_query->katigorimata[next_pred],relations,inb_res);
     in_query->katigorimata[next_pred]->op= '.';
@@ -164,7 +157,6 @@ predicates **fill_predicates (char * token, int num_predicates)
   char * compute_num,* query;
   predicates **pred = malloc(sizeof(predicates *)*num_predicates);
 
-  printf("num of pred %d\n",num_predicates);
 
   query = strtok(token,"&");
   for (i=0;i<num_predicates;i++)
@@ -175,7 +167,6 @@ predicates **fill_predicates (char * token, int num_predicates)
     num_length=0;
     flag=0;
     compute_num = query;
-    printf("Checking query %s\n",query);
     for(j=0;j<strlen(compute_num);j++)
     {
       if (compute_num[j] == ' ')
@@ -194,7 +185,6 @@ predicates **fill_predicates (char * token, int num_predicates)
           pred[i]->rel1=-1;
         }
         flag=1;
-        printf("i=%d\n",i );
         pred[i]->op = compute_num[j];
       }
       if(compute_num[j] == '.' && flag==0)
@@ -294,7 +284,7 @@ void FreeBatch(batch *b){
   for(int k=0;k<b->num_of_queries;k++){
     free(b->queries_table[k]->sxeseis);
     free(b->queries_table[k]->proboles);
-    for(int i;i<b->queries_table[k]->num_of_predicates;i++){
+    for(int i=0;i<b->queries_table[k]->num_of_predicates;i++){
       free(b->queries_table[k]->katigorimata[i]);
     }
     free(b->queries_table[k]->katigorimata);

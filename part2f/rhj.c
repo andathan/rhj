@@ -95,7 +95,6 @@ void IndexAndResult(int index_tuples,int comp_tuples,int index_Psum,int comp_Psu
       rowID = chain[rowID];//pairnw tin proigoumeni eggrafi meso tou chain
     }
   }
-  printf("rhj result counter = %d \n",results_c );
   free(hashtable);
   free(chain);
 }
@@ -135,7 +134,6 @@ void RadixHashJoin(Relation *relR, Relation *relS,inbet_list *res1,inbet_list *r
   free(relR_seg->tuples);
   free (relS_seg);
   free (relR_seg);
-  printf("ENd Of rhj\n" );
 }
 
 int getnextodd(int num)
@@ -186,7 +184,6 @@ Relation *BuildRelation(inbet_list *list,Relation *init_relation){
   inbet_node *current = list->head;
   int node=0,c=0;
 
-  printf("build relation :%d total_tuples\n",list->total_tuples );
   while(current!=NULL){ //for every node in list
     for(i=0;i<current->num_tuples;i++){  //for every rowID in node
       new_relation->tuples[c].key = c;  /*pernao san key to index tis endiamesis domis*/
@@ -196,6 +193,5 @@ Relation *BuildRelation(inbet_list *list,Relation *init_relation){
     node++;
     current = current->next;
   }
-  printf("new relation builded with %d tuples\n", new_relation->num_tuples);
   return new_relation;
 }

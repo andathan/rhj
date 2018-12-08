@@ -40,7 +40,6 @@ int divi(int num1,int num2,int *div , int *mod){
 int GetValue(inbet_list *list,int pos){
   int node ,rem ;
   divi(pos,BUFFERSIZE,&node ,&rem);
-  printf("pos = %d ,node = %d , rem = %d\n",pos,node,rem );
   inbet_node *current = list->head;
   while(node!=0){
       current = current->next;
@@ -78,6 +77,7 @@ inbetween_results *UpdateInbetList(inbetween_results *inb_results,inbet_list *re
 
     for(i=0;i<inb_results->num_lists;i++){
       if(inb_results->inbet_lists[i]->joined==1){   //rel j has previous results
+        printf("%d rel id , ",i );
         current = previous_res->head;
         while(current!=NULL){
           for(j=0;j<current->num_tuples;j++){
@@ -91,13 +91,11 @@ inbetween_results *UpdateInbetList(inbetween_results *inb_results,inbet_list *re
     }
 
     if(inb_results->inbet_lists[rel1]->joined==-1){ //if rel1 has no previous , results are results from join
-      printf("%d got joined and has no previous , so it takes its results\n",rel1 );
       new_inb_res->inbet_lists[rel1]->joined =1;
       new_inb_res->inbet_lists[rel1] = result1;
       //free result2
     }
     if(inb_results->inbet_lists[rel2]->joined==-1){
-      printf("%d got joined and has no previous , so it takes its results\n",rel2 );
       new_inb_res->inbet_lists[rel2] = result2;
       new_inb_res->inbet_lists[rel2]->joined =1;
       //free result1
@@ -121,13 +119,11 @@ inbetween_results *UpdateInbetList2(inbetween_results *inb_results,inbet_list *r
   }else{
     new_inb_res = InitInbetResults(inb_results->num_lists);
     for(int i=0;i<inb_results->num_lists;i++){
-      printf("%d relation is joined and gets updated\n",i);
       if(inb_results->inbet_lists[i]->joined==1){   //rel j has previous results
         current = results->head;
         while(current!=NULL){
           for(int j=0;j<current->num_tuples;j++){
             value = GetValue(inb_results->inbet_lists[i],current->rowIDS[j]);
-            printf("key to be inserted:%d\n",current->rowIDS[j]);
             InsertInbetList(new_inb_res->inbet_lists[i],value);
           }
           current=current->next;
@@ -157,7 +153,6 @@ void PrintInbetList(inbet_list *list){
   inbet_node *current=list->head;
   while (current!=NULL) {
     for(int i=0;i<current->num_tuples;i++){
-      printf("%d -",current->rowIDS[i]);
     }
     current=current->next;
   }

@@ -17,9 +17,7 @@ relation_data **find_corresponding(query *in_query,all_data *datatable){
     else{
       build_num= make_number(num_length, in_query->sxeseis, j);
       num_length=0;
-      printf("rel id %d\n",build_num );
       corresponding_table[corresponding_counter] = datatable->table[build_num];
-      printf("counter : %d // %d\n",datatable->table[build_num]->columns[0]->num_tuples,corresponding_table[corresponding_counter]->columns[0]->num_tuples );
       corresponding_counter++;
     }
   }
@@ -31,14 +29,12 @@ void compute_operation(char op,int constant,Relation *relation,inbet_list *A){
   if (op == '='){
     for (i=0;i<relation->num_tuples;i++){
       if (relation->tuples[i].payload == constant){
-        printf(" %ju == %d \n",relation->tuples[i].payload,constant );
         InsertInbetList (A, relation->tuples[i].key);
       }
     }
   }
   else if (op == '>'){
     for (i=0;i<relation->num_tuples;i++){
-      printf("-");
       if (relation->tuples[i].payload > constant){
         InsertInbetList(A, relation->tuples[i].key);
       }
@@ -59,10 +55,8 @@ uint64_t sum(inbet_list *list,Relation *rel){
    int i;
    uint64_t sum=0;
    inbet_node *current = list->head;
-   printf("sum\n");
    while(current!=NULL){
     /*for every key in list , add its value to sum*/
-    printf("current->num_tuples = %d \n",current->num_tuples);
     for(i=0;i<current->num_tuples;i++){
 //      printf("[%d]\n",current->rowIDS[i]);
       sum += rel->tuples[current->rowIDS[i]].payload;
@@ -83,11 +77,10 @@ void show_results(inbetween_results *res,relation_data **data, char * token) //t
     sscanf(relcol,"%d.%d",&rel,&col);
     //printf("Requesting %d.%d\n",rel,col);
     if(res->inbet_lists[rel]->head==NULL){
-      printf("NULL\n");
+      printf("NULL ");
     }else{
-      printf("rel = %d , col = %d \n",rel , col );
       col_sum = sum(res->inbet_lists[rel],data[rel]->columns[col]);
-      printf("~%ju\n",col_sum );
+      printf("%ju ",col_sum );
     }
     relcol = strtok(NULL," \n");
   }

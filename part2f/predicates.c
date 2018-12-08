@@ -9,6 +9,7 @@
 batch *InitBatch(){
   batch *my_batch=malloc(sizeof(batch));
   my_batch->num_of_queries=0;
+  my_batch->queries_table=malloc(sizeof(query*));
 }
 
 batch *AddToBatch(batch *my_batch,char **tokens){
@@ -20,6 +21,8 @@ batch *AddToBatch(batch *my_batch,char **tokens){
     }
   }
   my_batch->queries_table = realloc(my_batch->queries_table,sizeof(query*)*(my_batch->num_of_queries+1));
+  if (my_batch->queries_table==NULL)
+    printf("Error on realloc!\n");
   my_batch->queries_table[my_batch->num_of_queries] = (query *)malloc(sizeof(query));
   my_batch->queries_table[my_batch->num_of_queries]->sxeseis = tokens[0];
   my_batch->queries_table[my_batch->num_of_queries]->proboles = tokens[2];
@@ -86,10 +89,12 @@ void execute_query(query *in_query,all_data *data){
     for(int j=0;j<relations[i]->numColumns;j++){
     }
   }
-  int next_pred ;
+  int next_pred=-1;
   inbetween_results *inb_res=InitInbetResults(in_query->num_of_relations);
+  printf("HERE\n\n");
   for(int i=0;i<in_query->num_of_predicates;i++){
-    next_pred = select_predicate(in_query->num_of_predicates,in_query->katigorimata,relations);
+    next_pred = select_predicate(in_query->num_of_predicates,in_query->katigorimata,relations,next_pred);
+    printf("executing_predicate %d\n",next_pred);
     printf("%d %d %c %d %d \n",in_query->katigorimata[next_pred]->rel1,in_query->katigorimata[next_pred]->col1,in_query->katigorimata[next_pred]->op,in_query->katigorimata[next_pred]->rel2,in_query->katigorimata[next_pred]->col2 );
     inb_res = execute_predicate(in_query->katigorimata[next_pred],relations,inb_res);
     in_query->katigorimata[next_pred]->op= '.';
@@ -146,7 +151,7 @@ int make_number (int num_length,char * compute_num, int j)
   {
     build_num+= pow(10,(k-1))*(compute_num[j-k]-'0');
   }
-  build_num+= compute_num[j-k]-'0';
+  build_num += compute_num[j-k]-'0';
   return build_num;
 }
 
@@ -220,7 +225,7 @@ predicates **fill_predicates (char * token, int num_predicates)
   return pred;
 }
 
-int select_predicate(int numofPredicates, predicates ** input_predicates,relation_data ** datatable){
+int select_predicate(int numofPredicates, predicates ** input_predicates,relation_data ** datatable, int previous_predicate){
 //girnaei ton arithmo me to predicate pou prepei na ektelesoume prota. theloume prota auta pou tha bgoun grigora
   /*
     epistrefei to predicate pou tha ektelestei. ekteloume prota ta filtra.
@@ -232,6 +237,24 @@ int select_predicate(int numofPredicates, predicates ** input_predicates,relatio
   int min_weight=-1;
   char no_more_filters=1;
   char select_filters = 1;
+  if(previous_predicate!=-1)
+  {
+  int prev_rel=input_predicates[previous_predicate]->rel1;
+  int prev_col=input_predicates[previous_predicate]->col1;
+  //if there is another predicate with the same relation just execute this predicate
+  for (int j=0;j<numofPredicates;j++)
+  {
+    if (((input_predicates[j]->rel1 == prev_rel && input_predicates[j]->col1== prev_col) || (input_predicates[j]->rel2 == prev_rel && input_predicates[j]->col2 == prev_col)) && input_predicates[j]->op!='.'){
+      return j;
+    }
+  }
+  }
+  for (int j=0;j<numofPredicates;j++){
+    if ((input_predicates[j]->rel1 == -1 || input_predicates[j]->rel2 == -1) && input_predicates[j]->op!='.'){
+      no_more_filters = 0;
+      break;
+    }
+  }
   for (int j=0;j<numofPredicates;j++){
     if ((input_predicates[j]->rel1 == -1 || input_predicates[j]->rel2 == -1) && input_predicates[j]->op!='.'){
       no_more_filters = 0;

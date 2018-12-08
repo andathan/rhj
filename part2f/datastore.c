@@ -6,7 +6,7 @@
 
 
 relation_data **find_corresponding(query *in_query,all_data *datatable){
-  int j,build_num,counter,num_length,corresponding_counter=0;
+  int j,build_num,counter,num_length=0,corresponding_counter=0;
   relation_data **corresponding_table=NULL;
     //first find how many relations we have
   corresponding_table =(relation_data **)malloc(sizeof(relation_data *)*(in_query->num_of_relations));

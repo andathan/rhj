@@ -41,6 +41,6 @@ void print_predicates (predicates ** predicates,int num_predicates);
 int find_num_of_predicates (char * token);
 int make_number (int num_length,char * compute_num, int j);
 predicates **fill_predicates (char * token, int num_predicates);
-int select_predicate (int , predicates **,relation_data **);
+int select_predicate (int , predicates **,relation_data **,int);
 void execute_query(query *in_query,all_data *data);
 #endif

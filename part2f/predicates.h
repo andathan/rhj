@@ -5,6 +5,7 @@
 
 typedef struct relation_data relation_data;
 typedef struct all_data all_data;
+typedef struct inbetween_results inbetween_results;
 
 struct predicates{      /* struct predicates stores info for predicate in query*/
   int rel1;             /* index of 1st relation in predicate*/
@@ -41,6 +42,6 @@ void print_predicates (predicates ** predicates,int num_predicates);
 int find_num_of_predicates (char * token);
 int make_number (int num_length,char * compute_num, int j);
 predicates **fill_predicates (char * token, int num_predicates);
-int select_predicate (int , predicates **,relation_data **,int);
+int select_predicate (int , predicates **,relation_data **,int , inbetween_results *);
 void execute_query(query *in_query,all_data *data);
 #endif

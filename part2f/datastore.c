@@ -58,7 +58,7 @@ uint64_t sum(inbet_list *list,Relation *rel){
    while(current!=NULL){
     /*for every key in list , add its value to sum*/
     for(i=0;i<current->num_tuples;i++){
-//      printf("%d , current = %d\n",current->rowIDS[i],current->num_tuples );
+      printf("%d , current = %d\n",current->rowIDS[i],current->num_tuples );
       sum += rel->tuples[current->rowIDS[i]].payload;
     }
     current=current->next;

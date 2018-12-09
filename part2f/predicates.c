@@ -86,14 +86,10 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
 
 void execute_query(query *in_query,all_data *data){
   relation_data **relations = find_corresponding(in_query,data);
-//  for(int i=0;i<in_query->num_of_relations;i++){
-//    for(int j=0;j<relations[i]->numColumns;j++){
-//    }
-//  }
   int next_pred=-1;
   inbetween_results *inb_res=InitInbetResults(in_query->num_of_relations);
   for(int i=0;i<in_query->num_of_predicates;i++){
-    next_pred = select_predicate(in_query->num_of_predicates,in_query->katigorimata,relations,next_pred);
+    next_pred = select_predicate(in_query->num_of_predicates,in_query->katigorimata,relations,next_pred,inb_res);
     printf("Next pred is %d\n",next_pred);
     inb_res = execute_predicate(in_query->katigorimata[next_pred],relations,inb_res);
     in_query->katigorimata[next_pred]->op= '.';
@@ -224,7 +220,7 @@ predicates **fill_predicates (char * token, int num_predicates)
   return pred;
 }
 
-int select_predicate(int numofPredicates, predicates ** input_predicates,relation_data ** datatable, int previous_predicate){
+int select_predicate(int numofPredicates, predicates ** input_predicates,relation_data ** datatable, int previous_predicate,inbetween_results *res){
 //girnaei ton arithmo me to predicate pou prepei na ektelesoume prota. theloume prota auta pou tha bgoun grigora
   /*
     epistrefei to predicate pou tha ektelestei. ekteloume prota ta filtra.
@@ -236,20 +232,12 @@ int select_predicate(int numofPredicates, predicates ** input_predicates,relatio
   int min_weight=-1;
   char no_more_filters=1;
   char select_filters = 1;
-  if(previous_predicate!=-1)
-  {
-  int prev_rel=input_predicates[previous_predicate]->rel1;
-  int prev_col=input_predicates[previous_predicate]->col1;
-  //if there is another predicate with the same relation just execute this predicate
-  for (int j=0;j<numofPredicates;j++)
-  {
-    if (((input_predicates[j]->rel1 == prev_rel && input_predicates[j]->col1== prev_col) || (input_predicates[j]->rel2 == prev_rel && input_predicates[j]->col2 == prev_col)) && input_predicates[j]->op!='.'){
-      return j;
-    }
-  }
-  }
+  int prev_rel;
+  int prev_col;
+
   for (int j=0;j<numofPredicates;j++){
     if ((input_predicates[j]->rel1 == -1 || input_predicates[j]->rel2 == -1) && input_predicates[j]->op!='.'){
+
       no_more_filters = 0;
       break;
     }
@@ -263,6 +251,9 @@ int select_predicate(int numofPredicates, predicates ** input_predicates,relatio
   if (no_more_filters==1)//teleiosame me ta filters, pame sta joins
     select_filters = 0;
   for (i=0;i<numofPredicates;i++){
+    if(previous_predicate!=-1 && res->inbet_lists[input_predicates[i]->rel1]->joined==-1 && res->inbet_lists[input_predicates[i]->rel2]->joined==-1 ){
+      continue;
+    }
     if (select_filters==1){
       if ((input_predicates[i]->rel1 == -1 || input_predicates[i]->rel2 == -1) && input_predicates[i]->op != '.'  ){ //einai filtro && den exei ektelestei
         if (input_predicates[i]->rel1==-1){
@@ -293,7 +284,7 @@ int select_predicate(int numofPredicates, predicates ** input_predicates,relatio
       }
     }
     if (select_filters == 0){//den exw alla filtra h exw metaksi sxeseon
-      if ((input_predicates[i]->rel1 != -1 &&  input_predicates[i]->rel2 != -1) && input_predicates[i]->op != '.' ){ // join pou den exei ginei
+      if((input_predicates[i]->rel1 != -1 &&  input_predicates[i]->rel2 != -1) && input_predicates[i]->op != '.' ){ // join pou den exei ginei
             return_predicate = i;
       }
     }

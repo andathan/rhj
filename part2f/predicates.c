@@ -36,7 +36,8 @@ batch *AddToBatch(batch *my_batch,char **tokens){
 inbetween_results *execute_predicate(predicates *pred,relation_data **relations,inbetween_results *inb_res){
   Relation *relation,*rel1,*rel2;
   inbet_list *result1,*result2;
-  if(pred->rel1==-1){
+  if(pred->rel1==-1)
+  {
     rel2 = relations[pred->rel2]->columns[pred->col2];
     if(inb_res->inbet_lists[pred->rel2]->head==NULL){
       relation = rel2;
@@ -85,14 +86,15 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
 
 void execute_query(query *in_query,all_data *data){
   relation_data **relations = find_corresponding(in_query,data);
-  for(int i=0;i<in_query->num_of_relations;i++){
-    for(int j=0;j<relations[i]->numColumns;j++){
-    }
-  }
+//  for(int i=0;i<in_query->num_of_relations;i++){
+//    for(int j=0;j<relations[i]->numColumns;j++){
+//    }
+//  }
   int next_pred=-1;
   inbetween_results *inb_res=InitInbetResults(in_query->num_of_relations);
   for(int i=0;i<in_query->num_of_predicates;i++){
     next_pred = select_predicate(in_query->num_of_predicates,in_query->katigorimata,relations,next_pred);
+    printf("Next pred is %d\n",next_pred);
     inb_res = execute_predicate(in_query->katigorimata[next_pred],relations,inb_res);
     in_query->katigorimata[next_pred]->op= '.';
   }
@@ -229,7 +231,7 @@ int select_predicate(int numofPredicates, predicates ** input_predicates,relatio
     apo ta filtra dinoume perissotero baros se auta pou exoun megalo ginomeno diaspora * apostasi teleutaias timis apo to filtro.
      meta ta joins
   */
-  int i,return_predicate=-1,weight,constant,distance_to_filter,rel,col,max,min;
+  int i,return_predicate=-1,weight,constant,distance_to_filter=0,rel,col,max,min;
   int best=0;
   int min_weight=-1;
   char no_more_filters=1;

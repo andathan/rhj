@@ -58,7 +58,7 @@ uint64_t sum(inbet_list *list,Relation *rel){
    while(current!=NULL){
     /*for every key in list , add its value to sum*/
     for(i=0;i<current->num_tuples;i++){
-//      printf("[%d]\n",current->rowIDS[i]);
+//      printf("%d , current = %d\n",current->rowIDS[i],current->num_tuples );
       sum += rel->tuples[current->rowIDS[i]].payload;
     }
     current=current->next;
@@ -70,12 +70,12 @@ uint64_t sum(inbet_list *list,Relation *rel){
 void show_results(inbetween_results *res,relation_data **data, char * token) //thelei ligi doulitsa
 {
   /**/
-  char *relcol = strtok(token," ");
+  char *relcol = strtok(token," \n");
   int rel,col;
   uint64_t col_sum;
   while(relcol!=NULL){
     sscanf(relcol,"%d.%d",&rel,&col);
-    //printf("Requesting %d.%d\n",rel,col);
+    printf("%d.%d\n",rel,col );
     if(res->inbet_lists[rel]->head==NULL){
       printf("NULL ");
     }else{
@@ -84,6 +84,7 @@ void show_results(inbetween_results *res,relation_data **data, char * token) //t
     }
     relcol = strtok(NULL," \n");
   }
+  printf("\n");
 }
 
 relation_data *parsefile(char * filename){
@@ -109,8 +110,6 @@ relation_data *parsefile(char * filename){
     r2data->columns[i]->tuples = (tuple *)malloc(sizeof(tuple)*numofTuples);
     r2data->columns[i]->num_tuples = numofTuples;
   }
-  printf("%ju\n",numofTuples );
-  printf("%ju\n",numofColumns );
   r2data->numColumns = numofColumns;
   r2data->numTuples = numofTuples;
   char c;
@@ -145,10 +144,5 @@ relation_data *parsefile(char * filename){
       r2data->columns[i]->spread = sqrt(sum/numofTuples-1);
   }
 
-  /*for(int i=0;i<numofColumns;i++){
-    for(int j=0;j<numofTuples;j++){
-      printf("%d |%d\n", r2data->columns[i]->tuples[j].key,r2data->columns[i]->tuples[j].payload);
-    }
-  }*/
   return r2data;
   }

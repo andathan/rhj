@@ -91,11 +91,8 @@ void execute_query(query *in_query,all_data *data){
   }
   int next_pred=-1;
   inbetween_results *inb_res=InitInbetResults(in_query->num_of_relations);
-  printf("HERE\n\n");
   for(int i=0;i<in_query->num_of_predicates;i++){
     next_pred = select_predicate(in_query->num_of_predicates,in_query->katigorimata,relations,next_pred);
-    printf("executing_predicate %d\n",next_pred);
-    printf("%d %d %c %d %d \n",in_query->katigorimata[next_pred]->rel1,in_query->katigorimata[next_pred]->col1,in_query->katigorimata[next_pred]->op,in_query->katigorimata[next_pred]->rel2,in_query->katigorimata[next_pred]->col2 );
     inb_res = execute_predicate(in_query->katigorimata[next_pred],relations,inb_res);
     in_query->katigorimata[next_pred]->op= '.';
   }

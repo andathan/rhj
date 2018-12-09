@@ -1,4 +1,4 @@
-F#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "inbetween.h"
 
@@ -77,7 +77,6 @@ inbetween_results *UpdateInbetList(inbetween_results *inb_results,inbet_list *re
 
     for(i=0;i<inb_results->num_lists;i++){
       if(inb_results->inbet_lists[i]->joined==1){   //rel j has previous results
-        printf("%d rel id , ",i );
         current = previous_res->head;
         while(current!=NULL){
           for(j=0;j<current->num_tuples;j++){
@@ -140,7 +139,6 @@ void InsertInbetList(inbet_list *list,int key){
     list->head = InitInbetNode();
     list->current = list->head;
   }else if(list->current->num_tuples==BUFFERSIZE-1){ /*current buffer is full*/
-    printf("deutero node\n");
     list->current->next = InitInbetNode();
     list->current = list->current->next;
   }

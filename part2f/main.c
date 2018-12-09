@@ -27,7 +27,6 @@ int main (void)
     getline(&filename,&linesize,stdin);
   }
 
-  printf("waiting for queries\n");
 
   getline(&filename,&linesize,stdin);
   while(strcmp(filename,"\n")!=0){
@@ -35,11 +34,9 @@ int main (void)
     input_batch = InitBatch();
     while(strcmp(filename,"F\n")!=0){ //read and store queries in batch
       seperate_predicate(filename,tokens);
-      printf("1:%s\n2:%s\n3:%s\n",tokens[0],tokens[1],tokens[2]);
       AddToBatch(input_batch,tokens);
       getline(&filename,&linesize,stdin);
     }
-    printf("endo of batch\n");
     for(int k=0;k<input_batch->num_of_queries;k++){
       execute_query(input_batch->queries_table[k],datatable);
     }

@@ -34,34 +34,56 @@ batch *AddToBatch(batch *my_batch,char **tokens){
 }
 
 inbetween_results *execute_predicate(predicates *pred,relation_data **relations,inbetween_results *inb_res){
-  Relation *relation,*rel1,*rel2;
+  Relation *relation,*rel1,*rel2,*relation1,*relation2;
   inbet_list *result1,*result2;
   if(pred->rel1==-1)
   {
     rel2 = relations[pred->rel2]->columns[pred->col2];
     if(inb_res->inbet_lists[pred->rel2]->head==NULL){
       relation = rel2;
-    }else{
+    }else
+    {
       relation = BuildRelation(inb_res->inbet_lists[pred->rel2],rel2);
     }
     result2 = InitInbetList();
     compute_operation(pred->op,pred->col1,relation,result2);
     inb_res = UpdateInbetList2(inb_res,result2,pred->rel2);
-  }else if(pred->rel2==-1){
+  }
+  else if(pred->rel2==-1){
     rel1 = relations[pred->rel1]->columns[pred->col1];
     if(inb_res->inbet_lists[pred->rel1]->head==NULL){
       relation = rel1;
-
     }else{
       relation = BuildRelation(inb_res->inbet_lists[pred->rel1],rel1);
     }
     result1 = InitInbetList();
     compute_operation(pred->op,pred->col2,relation,result1);
     inb_res = UpdateInbetList2(inb_res,result1,pred->rel1);
-  }else if(pred->rel1==pred->rel2){
+  }
+  else if(pred->rel1==pred->rel2)
+  {
     printf("%d==%d\n", pred->rel1,pred->rel2);
-    //edo prepei na mpei isotita pinakwn - kalitera se sinartisi
-  }else{
+    rel1 = relations[pred->rel1]->columns[pred->col1];
+    if(inb_res->inbet_lists[pred->rel1]->head==NULL){
+      relation1 = rel1;
+    }else{
+      relation1 = BuildRelation(inb_res->inbet_lists[pred->rel1],rel1);
+    }
+    rel2 = relations[pred->rel2]->columns[pred->col2];
+    if(inb_res->inbet_lists[pred->rel2]->head==NULL){
+      relation2 = rel2;
+    }else
+    {
+      relation2 = BuildRelation(inb_res->inbet_lists[pred->rel2],rel2);
+    }
+    result1 = InitInbetList();
+    for (int k=0;k<relation2->num_tuples;k++)
+      {
+    //    printf("sending value %ju\n",rel2->tuples[k].payload);
+        compute_operation(pred->op,relation2->tuples[k].payload,relation1,result1);
+      }
+  }
+  else{
     rel1 = relations[pred->rel1]->columns[pred->col1];
     rel2 = relations[pred->rel2]->columns[pred->col2];
     if(inb_res->inbet_lists[pred->rel2]->head!=NULL){
@@ -97,8 +119,6 @@ void execute_query(query *in_query,all_data *data){
   show_results(inb_res,relations,in_query->proboles);
   //free inb_res , relations
 }
-
-
 void seperate_predicate (char * input, char * temp_tokens[3] )
 {
   char *tokens[3];

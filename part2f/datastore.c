@@ -65,8 +65,6 @@ uint64_t sum(inbet_list *list,Relation *rel){
   }
   return sum;
 }
-
-
 void show_results(inbetween_results *res,relation_data **data, char * token) //thelei ligi doulitsa
 {
   /**/

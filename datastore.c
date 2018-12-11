@@ -6,6 +6,8 @@
 
 
 relation_data **find_corresponding(query *in_query,all_data *datatable){
+  /* apo to query ,briskei tis sxeseis pou simmetexoun kai epistrefei enan pinaka apo deiktes sta dedomena
+    tis kathe sxesis */
   int j,build_num,counter,num_length=0,corresponding_counter=0;
   relation_data **corresponding_table=NULL;
     //first find how many relations we have
@@ -25,6 +27,7 @@ relation_data **find_corresponding(query *in_query,all_data *datatable){
 }
 
 void compute_operation(char op,int constant,Relation *relation,inbet_list *A){
+  /*ektelei ta filtra twn query kai eisagi stin lista A ta kleidia*/
   int i;
   if (op == '='){
     for (i=0;i<relation->num_tuples;i++){
@@ -32,16 +35,13 @@ void compute_operation(char op,int constant,Relation *relation,inbet_list *A){
         InsertInbetList (A, relation->tuples[i].key);
       }
     }
-  }
-  else if (op == '>'){
+  }else if (op == '>'){
     for (i=0;i<relation->num_tuples;i++){
       if (relation->tuples[i].payload > constant){
         InsertInbetList(A, relation->tuples[i].key);
       }
     }
-  }
-  else if (op =='<'){
-    printf("constant = %d\n",constant );
+  }else if (op =='<'){
     for (i=0;i<relation->num_tuples;i++){
       if (relation->tuples[i].payload < constant){
         InsertInbetList (A, relation->tuples[i].key);
@@ -53,7 +53,7 @@ void compute_operation(char op,int constant,Relation *relation,inbet_list *A){
 
 void show_results(inbetween_results *res,relation_data **data, char * token) //thelei ligi doulitsa
 {
-  /**/
+  /*emfanizei ta athroismata pou zitountai sto query*/
   char *temp=malloc(strlen(token)+1);
   strcpy(temp,token);
   char *relcol = strtok(temp," \n");
@@ -76,7 +76,7 @@ void show_results(inbetween_results *res,relation_data **data, char * token) //t
 }
 
 relation_data *parsefile(char * filename){
-
+  /*pernaei ena arxeio sti mnimi kai to epistrefei,apothikeuontai kai ta statistika*/
   uint64_t num=0;
   uint64_t numofColumns;
   uint64_t numofTuples;
@@ -132,4 +132,4 @@ relation_data *parsefile(char * filename){
       r2data->columns[i]->spread = sqrt(sum/numofTuples-1);
   }
   return r2data;
-  }
+}

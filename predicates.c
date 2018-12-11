@@ -71,6 +71,7 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
 */
 
   }else{
+
     rel1 = relations[pred->rel1]->columns[pred->col1];
     rel2 = relations[pred->rel2]->columns[pred->col2];
     if(inb_res->joined[pred->rel2]!=-1){
@@ -82,7 +83,11 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
     result1 = InitInbetList();
     result2 = InitInbetList();
     if(pred->op=='='){
-      RadixHashJoin(rel1,rel2,result1,result2);
+      if(inb_res->joined_pairs[pred->rel1][pred->rel2]!=-1){
+        SerialCompare(rel1,rel2,result1,result2);
+      }else{
+        RadixHashJoin(rel1,rel2,result1,result2);
+      }
       inb_res=UpdateInbetList(inb_res,result1,result2,pred->rel1,pred->rel2);
     }else{
       //edo prepei na mpoun ta > , < metaksi pinakwn - sinartisi

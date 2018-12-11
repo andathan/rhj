@@ -64,6 +64,7 @@ void RadixHashJoin(Relation *, Relation *,inbet_list *,inbet_list *);
 Relation *BuildRelation(inbetween_results *inb,int rel_id,Relation *init_relation);
 /*body of functions in datastore.c*/
 
+void SerialCompare(Relation *rel1,Relation *rel2,inbet_list *res1,inbet_list *res2);
 relation_data **find_corresponding(query *,all_data *datatable);
 void compute_operation(char op, int constant,Relation * relation,inbet_list * A);
 void show_results(inbetween_results *inb_results,relation_data **input_data, char * token);

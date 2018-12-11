@@ -23,18 +23,20 @@ inbetween_results *InitInbetResults(int n){
   results->num_lists = n;
   results->inbetween=(int **)malloc(sizeof(int *)*n);
   results->joined=(int *)malloc(sizeof(int)*n);
+  results->joined_pairs=malloc(sizeof(int *)*n);
   for(i=0;i<n;i++){
     results->joined[i]=-1;
+    results->joined_pairs[i]=malloc(sizeof(int)*n);
+    for(int j=0;j<n;j++) results->joined_pairs[i][j]=-1;
   }
+
   return results;
 }
 
 
 
 inbetween_results *UpdateInbetList(inbetween_results *inb_results,inbet_list *result1,inbet_list *result2,int rel1,int rel2){
-  /*ta row_results stin proti stili periexoun tis theseis twn keys sta results pou prepei na mpoun sta kenuria results*/
-  //brisko poia prepei na kratiso apo ta proigoumena,sta row_results h proti stili tha mu deixnei tis
-  //grammes pou prepei na ksanaperaso apo ta proigoumena apotelesmata sta kenuria
+  /*ananewnei tin endiamesi domi me ta kainouria apotelesmata*/
   int matching_rel,i,j,key,pos,total_counter=0;
   inbetween_results *new_inb_res;
   inbet_node *current;
@@ -45,9 +47,7 @@ inbetween_results *UpdateInbetList(inbetween_results *inb_results,inbet_list *re
 
   if(inb_results->joined[rel1]==-1 && inb_results->joined[rel2]==-1){ //
     inb_results->inbetween[rel1] = malloc(sizeof(int)*result1->total_tuples);
-    inb_results->inbetween[rel2] = malloc(sizeof(int)*result2->total_tuples);
     inb_results->joined[rel1] = result1->total_tuples;
-    inb_results->joined[rel2] = result2->total_tuples;
     total_counter=0;
     current = result1->head;
     //store every key
@@ -59,6 +59,9 @@ inbetween_results *UpdateInbetList(inbetween_results *inb_results,inbet_list *re
       current=current->next;
     }
     total_counter=0;
+
+    inb_results->joined[rel2] = result2->total_tuples;
+    inb_results->inbetween[rel2] = malloc(sizeof(int)*result2->total_tuples);
     current = result2->head;
     while(current!=NULL){
       for(i=0;i<current->num_tuples;i++){
@@ -68,9 +71,14 @@ inbetween_results *UpdateInbetList(inbetween_results *inb_results,inbet_list *re
       current=current->next;
     }
     return inb_results;
+    inb_results->joined_pairs[rel1][rel2]=1;
+    inb_results->joined_pairs[rel2][rel1]=1;
   }else{  //uparxoun apotelesmata kai prepei na kano antistoixisi
     int other_rel;
     new_inb_res = InitInbetResults(inb_results->num_lists);
+    for(i=0;i<inb_results->num_lists;i++){
+      for(int j=0;j<inb_results->num_lists;j++) new_inb_res->joined_pairs[i][j]=inb_results->joined_pairs[i][j];
+    }
     if(inb_results->joined[rel1]!=-1){
       previous_res = result1;
       other_rel = rel2;
@@ -135,6 +143,8 @@ inbetween_results *UpdateInbetList(inbetween_results *inb_results,inbet_list *re
       }
       new_inb_res->joined[rel2]= total_counter;
     }
+    new_inb_res->joined_pairs[rel1][rel2]=1;
+    new_inb_res->joined_pairs[rel2][rel1]=1;
     FreeInbetList(inb_results);
     return new_inb_res;
   }

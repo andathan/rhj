@@ -26,6 +26,7 @@ struct inbetween_results{
   int **inbetween;          /*array of pointers to lists*/
   int *joined;
   int num_lists;            /*number of lists*/
+  int **joined_pairs;
 };
 
 typedef struct inbetween_results inbetween_results;

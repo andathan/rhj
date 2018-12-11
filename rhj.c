@@ -163,6 +163,17 @@ void print_relation (Relation* in_relation)
   }
 }
 
+void SerialCompare(Relation *rel1,Relation *rel2,inbet_list *res1,inbet_list *res2){
+  if(rel1->num_tuples!=rel2->num_tuples){
+    printf("lathos\n");
+  }
+  for(int i=0;i<rel1->num_tuples;i++){
+    if(rel1->tuples[i].payload == rel2->tuples[i].payload ){
+      InsertInbetList(res1,rel1->tuples[i].key);
+      InsertInbetList(res2,rel2->tuples[i].key);
+    }
+  }
+}
 
 int H2(int a) //Thomas Wang integer hash method
 {

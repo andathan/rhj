@@ -5,6 +5,248 @@
 #include <stdint.h>
 #include <ctype.h>
 #include "predicates.h"
+#include "trees.h"
+
+
+predicate * make_predicate (int rel1, int col1, int rel2, int col2, char op)
+{
+  predicate * new_pred = malloc(sizeof(predicate));
+  new_pred->rel1 = rel1;
+  new_pred->col1= col1;
+  new_pred->op = op;
+  new_pred->rel2=rel2;
+  new_pred->col2=col2;
+}
+void restore_statistics (relation_data ** relations, int rel)
+{
+  int i;
+  relation_data * r2data;
+  if (rel1!=-1)
+    r2data = relations[rel1];
+
+  for (k=0;k<r2data->numColumns;k++)
+  {
+    r2data->columns[k]->l = r2data->columns[k]->prev_l;
+    r2data->columns[k]->u = r2data->columns[k]->prev_u;
+    r2data->columns[k]->f = r2data->columns[k]->prev_f;
+    r2data->columns[k]->d = r2data->columns[k]->prev_d;
+    r2data->columns[k]->restored=0;
+  }
+
+}
+float update_statistics(relation_data ** relations, predicates * curr_pred){
+  int curr_column = curr_pred->col1,k;
+  float old_d,second_old_d;
+  relation_data * r2data, * second_r2data;
+  if (curr_pred->rel1!=-1)
+    r2data = relations[curr_pred->rel1];
+  if (curr_pred->rel2!=-1)
+    {
+    second_r2data = relations[curr_pred->rel2];
+    printf("d is %f\n",second_r2data->columns[curr_pred->col2]->d);
+    }
+  else
+    second_r2data = NULL;
+  int i = curr_column;
+  float n = (float)(r2data->columns[i]->u - r2data->columns[i]->l +1);
+  float old_f= r2data->columns[i]->f;//used for storing previous f value
+  if (curr_pred->rel2==-1 && curr_pred->op=='=')//R.A = k
+  {
+    if (r2data->columns[i]->u-r2data->columns[i]->l+1<M) //we have a tabe of size u- l+1
+    {
+      if (curr_pred->col2 < r2data->columns[i]->l || curr_pred->col2 > r2data->columns[i]->u )
+      {
+        r2data->columns[i]->d=0.0;
+        r2data->columns[i]->f=0.0;
+      }
+      else if (r2data->columns[i]->d_table[(int)(curr_pred->col2 - r2data->columns[i]->l)]==1)
+      {
+        printf("%d exists in d_table\n",curr_pred->col2);
+        r2data->columns[i]->f=r2data->columns[i]->f/r2data->columns[i]->d;
+        r2data->columns[i]->d=1.0;
+      }
+      else
+        {
+          r2data->columns[i]->d=0.0;
+          r2data->columns[i]->f=0.0;
+        }
+    }
+    else //we have a table of size M
+    {
+      if (r2data->columns[i]->d_table[(int)(curr_pred->col2-r2data->columns[i]->u)%M]==1)
+        {
+          printf("%d exists in d_table\n",curr_pred->col2);
+          r2data->columns[i]->f=r2data->columns[i]->f/r2data->columns[i]->d;
+          r2data->columns[i]->d=1.0;
+        }
+        else
+          {
+            r2data->columns[i]->d=0.0;
+            r2data->columns[i]->f=0.0;
+          }
+    }
+    r2data->columns[i]->l = curr_pred->col2;
+    r2data->columns[i]->u = curr_pred->col2;
+    //now for the rest columns
+    for (i=0;i<r2data->numColumns;i++)
+    {
+      if (i==curr_column)
+        continue;
+        r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -pow((1.0- (r2data->columns[curr_column]->f/old_f)),r2data->columns[i]->f/r2data->columns[i]->d));
+        r2data->columns[i]->f = r2data->columns[curr_column]->f;
+    }
+  }
+  else if (curr_pred->rel2 == -1 && curr_pred->op=='>')//R.A > k
+  {
+    float k1 = curr_pred->col2;
+    if (k1<r2data->columns[i]->l)
+        k1 = r2data->columns[i]->l;
+    r2data->columns[i]->l =k1;
+    r2data->columns[i]->d = r2data->columns[i]->d * (r2data->columns[i]->u-k1)/(r2data->columns[i]->u-r2data->columns[i]->l);
+    r2data->columns[i]->f = r2data->columns[i]->f * (r2data->columns[i]->u-k1)/(r2data->columns[i]->u-r2data->columns[i]->l);
+    //now for the rest colmns
+    for (i=0;i<r2data->numColumns;i++)
+    {
+      if (i==curr_column)
+        continue;
+      r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -pow((1.0- (r2data->columns[curr_column]->f/old_f)),r2data->columns[i]->f/r2data->columns[i]->d));
+      r2data->columns[i]->f = r2data->columns[curr_column]->f;
+    }
+  }
+  else if (curr_pred->rel2== -1 && curr_pred->op=='<')//R.A < k
+  {
+    float k2 = curr_pred->col2;
+    if (k2>r2data->columns[i]->u)
+      k2 = r2data->columns[i]->u;
+    r2data->columns[i]->u = k2;
+    r2data->columns[i]->d = r2data->columns[i]->d * (k2-r2data->columns[i]->l)/(r2data->columns[i]->u-r2data->columns[i]->l);
+    r2data->columns[i]->f = r2data->columns[i]->f * (k2-r2data->columns[i]->l)/(r2data->columns[i]->u-r2data->columns[i]->l);
+    //now for the rest colums
+    for (i=0;i<r2data->numColumns;i++)
+    {
+      if (i==curr_column)
+        continue;
+      r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -pow((1.0- (r2data->columns[curr_column]->f/old_f)),r2data->columns[i]->f/r2data->columns[i]->d));
+      r2data->columns[i]->f = r2data->columns[curr_column]->f;
+    }
+}
+  else if (curr_pred->rel1 == curr_pred->rel2)//R.A = R.B
+  {
+    if (r2data->columns[i]->l<r2data->columns[curr_pred->col2]->l)
+      {
+        r2data->columns[i]->l = r2data->columns[curr_pred->col2]->l;
+      }
+    else
+      {
+        r2data->columns[curr_pred->col2]->l = r2data->columns[i]->l;
+      }
+    if (r2data->columns[i]->u<r2data->columns[curr_pred->col2]->u)
+    {
+      r2data->columns[curr_pred->col2]->u = r2data->columns[i]->u;
+    }
+    else
+    {
+      r2data->columns[i]->u = r2data->columns[curr_pred->col2]->u;
+    }
+    r2data->columns[i]->f = r2data->columns[i]->f/n;
+    r2data->columns[curr_pred->col2]->f =  r2data->columns[i]->f;
+    r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -pow((1.0- (r2data->columns[curr_column]->f/old_f)),(r2data->columns[i]->f/r2data->columns[i]->d)));
+    r2data->columns[curr_pred->col2]->d = r2data->columns[i]->d;
+    for (i=0;i<r2data->numColumns;i++)
+    {
+      if (i==curr_column)
+        continue;
+      r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -pow((1.0- (r2data->columns[curr_column]->f/old_f)),r2data->columns[i]->f/r2data->columns[i]->d));
+      r2data->columns[i]->f = r2data->columns[curr_column]->f;
+    }
+  }
+  else if ((curr_pred->rel1 == curr_pred->rel2) && (curr_pred->col1 == curr_pred->col2)) //autosisxetisi
+  {
+    r2data->columns[i]->f = r2data->columns[i]->f * r2data->columns[i]->f /n;
+    for (i=0;i<r2data->numColumns;i++)
+    {
+      if (i==curr_column)
+        continue;;
+      r2data->columns[i]->f = r2data->columns[curr_column]->f;
+    }
+  }
+  else //join metaksi 2 pinakon
+  {
+    //first keep old values in case we need to restore them
+    //for table A
+    for (k=0;k<r2data->numColumns;k++)
+    {
+      if (r2data->columns[k]->restored==0)//store data only if its the first call. this protects that from storing intermediate results in the restoring section
+      {
+      r2data->columns[k]->prev_l =r2data->columns[k]->l;
+      r2data->columns[k]->prev_u =r2data->columns[k]->u;
+      r2data->columns[k]->prev_f =r2data->columns[k]->f;
+      r2data->columns[k]->prev_d =r2data->columns[k]->d;
+      r2data->columns[k]->restored=1;
+      }
+    }
+    //for table B
+    for (k=0;k<second_r2data->numColumns;k++)
+    {
+      if (second_r2data->columns[k]->restored==0)//store data only if its the first call. this protects that from storing intermediate results in the restoring section
+      {
+      second_r2data->columns[k]->prev_l =second_r2data->columns[k]->l;
+      second_r2data->columns[k]->prev_u =second_r2data->columns[k]->u;
+      second_r2data->columns[k]->prev_f =second_r2data->columns[k]->f;
+      second_r2data->columns[k]->prev_d =second_r2data->columns[k]->d;
+      second_r2data->columns[k]->restored=1;
+      }
+    }
+    //dialego apo ta 2 low to megalitero low, kai apo ta 2 upper to mikrotero upper
+    if (r2data->columns[i]->l<second_r2data->columns[curr_pred->col2]->l)
+    {
+      r2data->columns[i]->l = second_r2data->columns[curr_pred->col2]->l;
+    }
+    else
+    {
+      second_r2data->columns[curr_pred->col2]->l = r2data->columns[i]->l;
+    }
+    if (r2data->columns[i]->u<second_r2data->columns[curr_pred->col2]->u)
+    {
+      second_r2data->columns[curr_pred->col2]->u = r2data->columns[i]->u;
+    }
+    else
+    {
+      r2data->columns[i]->u = second_r2data->columns[curr_pred->col2]->u;
+    }
+    float n = (float)(r2data->columns[i]->u - r2data->columns[i]->l +1);
+    r2data->columns[i]->f= r2data->columns[i]->f * second_r2data->columns[curr_pred->col2]->f/n;
+    second_r2data->columns[curr_pred->col2]->f = r2data->columns[i]->f;
+    old_d = r2data->columns[i]->d;
+    r2data->columns[i]->d = r2data->columns[i]->d  * second_r2data->columns[curr_pred->col2]->d/n;
+    second_old_d = second_r2data->columns[curr_pred->col2]->d;
+    second_r2data->columns[curr_pred->col2]->d = r2data->columns[i]->d;
+    //now for the rest columns
+    //for table A
+    for (i=0;i<r2data->numColumns;i++)
+    {
+      if (i==curr_column)
+        continue;
+      printf("\nd of i column is %f| d of curr_column %f| old_d is %f| f of i columns is %f | d of i column is %f\n", r2data->columns[i]->d , r2data->columns[curr_column]->d,old_d,r2data->columns[i]->f,r2data->columns[i]->d);
+      r2data->columns[i]->d = r2data->columns[i]->d * (1.0 - pow((1.0 - (r2data->columns[curr_column]->d/old_d)),r2data->columns[i]->f/r2data->columns[i]->d));
+      printf("Thus, new d is %f\n",r2data->columns[i]->d );
+      r2data->columns[i]->f = r2data->columns[curr_column]->f;
+    }
+    //for table B
+    for (i=0;i<second_r2data->numColumns;i++)
+    {
+      if (i==curr_pred->col2)
+        continue;
+      printf("(second) d of i column is %f| d of curr_column %f| old_d is %f| f of i columns is %f | d of i column is %f, pow is %f\n", second_r2data->columns[i]->d,second_r2data->columns[curr_column]->d,second_old_d,second_r2data->columns[i]->f,second_r2data->columns[i]->d,pow((1.0 - (second_r2data->columns[curr_column]->d/second_old_d)),second_r2data->columns[i]->f/second_r2data->columns[i]->d));
+      second_r2data->columns[i]->d = second_r2data->columns[i]->d * (1.0 -pow((1.0 - (second_r2data->columns[curr_column]->d/second_old_d)),second_r2data->columns[i]->f/second_r2data->columns[i]->d));
+      second_r2data->columns[i]->f = second_r2data->columns[curr_column]->f;
+        printf("(second) Thus, new d is %f\n",second_r2data->columns[i]->d );
+    }
+  }
+  printf("Statistics Updated! New stats:\n Low %ju \n Upper %ju \n Arithmos Stoixeion %f \n Arithmos Monadikon Stoixeion %f\n",r2data->columns[curr_column]->l, r2data->columns[curr_column]->u,r2data->columns[curr_column]->f,r2data->columns[curr_column]->d);
+  return r2data->columns[i]->f;
+  //sto join metaksi 2 pinakwn, h prosvasi ston deutero pinaka na ginetai meso ths second_r2data. na kanw tis katalliles allages
+}
 
 batch *InitBatch(){
   batch *my_batch=malloc(sizeof(batch));
@@ -104,14 +346,15 @@ void execute_query(query *in_query,all_data *data){
   inbetween_results *inb_res=InitInbetResults(in_query->num_of_relations);
   for(int i=0;i<in_query->num_of_predicates;i++){
     next_pred = select_predicate(in_query->num_of_predicates,in_query->katigorimata,relations,next_pred,inb_res);
+    printf("Next pred is %d\n",next_pred);
+    printf("Now updating statistics...\n");
+    update_statistics(relations,in_query->katigorimata[next_pred]);
     inb_res = execute_predicate(in_query->katigorimata[next_pred],relations,inb_res);
     in_query->katigorimata[next_pred]->op= '.';
   }
   show_results(inb_res,relations,in_query->proboles);
   //free inb_res , relations
 }
-
-
 void seperate_predicate (char * input, char * temp_tokens[3] )
 {
   char *tokens[3];
@@ -249,12 +492,11 @@ int select_predicate(int numofPredicates, predicates ** input_predicates,relatio
   int prev_col;
 
   for (int j=0;j<numofPredicates;j++){
-    if ((input_predicates[j]->rel1 == -1 || input_predicates[j]->rel2 == -1) && input_predicates[j]->op!='.'){
-
-      no_more_filters = 0;
-      break;
+    if (input_predicates[j]->op!='.'){
+      return j;
     }
   }
+/*
   for (int j=0;j<numofPredicates;j++){
     if ((input_predicates[j]->rel1 == -1 || input_predicates[j]->rel2 == -1) && input_predicates[j]->op!='.'){
       no_more_filters = 0;
@@ -302,7 +544,7 @@ int select_predicate(int numofPredicates, predicates ** input_predicates,relatio
       }
     }
   }
-  return return_predicate;
+  */
 }
 
 void FreeBatch(batch *b){

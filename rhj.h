@@ -7,8 +7,10 @@
 #include <stdint.h>
 #include <time.h>
 #include "predicates.h"
+#include "trees.h"
 
 #define N 3
+#define M 50000000
 #define SIZE 1000
 
 typedef struct inbet_list inbet_list;
@@ -24,9 +26,16 @@ typedef struct tuple tuple;
 struct Relation{
   tuple  *tuples;   //pinakas apo tuples
   uint32_t num_tuples;  //megethos pinaka
-  int max;
-  int min;
-  int spread;
+  uint64_t l;//minimum value
+  uint64_t u;//maximum value
+  float f;//number of values
+  float d;//number of distinct values
+  char * d_table;//used for finding the d
+  uint64_t prev_l;//used for restoring the previous value when we create the exec trees
+  uint64_t prev_u;//used for restoring the previous value when we create exec _TREES_H__
+  float prev_f;// ""
+  float prev_d;// ""
+  char restored;
 };
 typedef struct Relation Relation;
 

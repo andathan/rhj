@@ -76,13 +76,12 @@ void show_results(inbetween_results *res,relation_data **data, char * token) //t
 }
 
 relation_data *parsefile(char * filename){
-  /*pernaei ena arxeio sti mnimi kai to epistrefei,apothikeuontai kai ta statistika*/
   uint64_t num=0;
   uint64_t numofColumns;
   uint64_t numofTuples;
   int sum,max,min;
+  int size_of_d_table;
   int average;
-
   FILE *fp = fopen(filename,"rb");
   if (fp==NULL) {
     printf("Can't find file %s.Try another\n",filename);
@@ -90,7 +89,6 @@ relation_data *parsefile(char * filename){
   }
   fread(&numofTuples,sizeof(uint64_t),1,fp);
   fread(&numofColumns,sizeof(uint64_t),1,fp);
-
   relation_data *r2data =(relation_data *)malloc(sizeof(relation_data));
   r2data->columns = (Relation **)malloc(sizeof(Relation *)*numofColumns);
   for(int i=0;i<numofColumns;i++){
@@ -102,34 +100,55 @@ relation_data *parsefile(char * filename){
   r2data->numTuples = numofTuples;
   char c;
   for(int i=0;i<numofColumns;i++){
-    r2data->columns[i]->min = 999999; //arxikopoihsh se enan megalo arithmo
-    r2data->columns[i]->max = 0;
-    r2data->columns[i]->spread=0;
+    r2data->columns[i]->l = 99999999; //arxikopoihsh se enan megalo arithmo
+    r2data->columns[i]->u = 0;
+    r2data->columns[i]->f=numofTuples;
+    r2data->columns[i]->d=0;
+    r2data->columns[i]->restored=0;//this is used as a flag when restoring to its original specifications
     for(int j=0;j<numofTuples;j++){
       fread(&(num),sizeof(uint64_t),1,fp);
       r2data->columns[i]->tuples[j].payload=num;
       r2data->columns[i]->tuples[j].key = j;
-      if (num<r2data->columns[i]->min)
+      if (num<r2data->columns[i]->l)
       {
-        r2data->columns[i]->min=num;
+        r2data->columns[i]->l=num;
       }
-      if (num>r2data->columns[i]->max)
+      if (num>r2data->columns[i]->u)
       {
-        r2data->columns[i]->max=num;
+        r2data->columns[i]->u=num;
       }
     }
-    //calculate column spread
-    sum=0;
-      for(int j=0;j<numofTuples;j++)
-      {
-        sum += r2data->columns[i]->tuples[j].payload;
-      }
-      average = sum/numofTuples;
-      for(int j=0;j<numofTuples;j++)
-      {
-        sum = (r2data->columns[i]->tuples[j].payload - average) * (r2data->columns[i]->tuples[j].payload - average); //sto tetragono
-      }
-      r2data->columns[i]->spread = sqrt(sum/numofTuples-1);
+    //calculating distinct values
+      size_of_d_table = (int)r2data->columns[i]->u-(int)r2data->columns[i]->l+1;
+       if (size_of_d_table<M)
+       {
+        r2data->columns[i]->d_table = (char*)calloc(size_of_d_table,sizeof(char));
+        for(int j=0;j<numofTuples;j++)
+        {
+         num = r2data->columns[i]->tuples[j].payload;
+          int pos = (int)num - (int)r2data->columns[i]->l;
+        r2data->columns[i]->d_table[pos]= 1;
+        }
+       }
+       else
+       {
+        r2data->columns[i]->d_table = (char*)calloc(M,sizeof(char));
+        for(int j=0;j<numofTuples;j++)
+        {
+         num = r2data->columns[i]->tuples[j].payload;
+          int pos = (int)num - (int)r2data->columns[i]->l;
+         r2data->columns[i]->d_table[(pos)%M]= 1;
+        }
+        size_of_d_table = M;
+       }
+       for(int x=0;x<size_of_d_table;x++)
+       {
+         if (r2data->columns[i]->d_table[x]==1)
+          (r2data->columns[i]->d)++;
+       }
+       printf("\n---------\nColumn %d Statistics:\n",i);
+       printf("Low: %ju | Upper %ju | Num Values %f | Distinct Values %f\n---------\n",r2data->columns[i]->l,r2data->columns[i]->u,r2data->columns[i]->f,r2data->columns[i]->d);
+
   }
   return r2data;
-}
+  }

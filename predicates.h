@@ -2,10 +2,19 @@
 #define _PREDICATES_H__
 #include "rhj.h"
 #include "inbetween.h"
+#include "trees.h"
 
 typedef struct relation_data relation_data;
 typedef struct all_data all_data;
 typedef struct inbetween_results inbetween_results;
+
+struct exec_tree{
+  int rel;
+  int col;
+  struct exec_tree *left;
+  struct exec_tree *right;
+};
+typedef struct exec_tree exec_tree;
 
 struct predicates{      /* struct predicates stores info for predicate in query*/
   int rel1;             /* index of 1st relation in predicate*/
@@ -44,4 +53,7 @@ int make_number (int num_length,char * compute_num, int j);
 predicates **fill_predicates (char * token, int num_predicates);
 int select_predicate (int , predicates **,relation_data **,int , inbetween_results *);
 void execute_query(query *in_query,all_data *data);
+predicate * make_predicate (int rel1, int col1, int rel2, int col2, char op);
+void restore_statistics (relation_data ** relations, int rel);
+float update_statistics(relation_data ** relations, predicates * curr_pred);
 #endif

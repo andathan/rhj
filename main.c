@@ -3,8 +3,6 @@
 #include "predicates.h"
 #include <string.h>
 #include <math.h>
-
-
 int main (void)
 {
   char *tokens[3];
@@ -41,6 +39,7 @@ int main (void)
       execute_query(input_batch->queries_table[k],datatable);
     }
     FreeBatch(input_batch);
+    printf("============================\n End of Batch\n =======================\n");
     getline(&filename,&linesize,stdin);
   }
 }

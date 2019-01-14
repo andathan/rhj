@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include <time.h>
 #include "predicates.h"
-#include "trees.h"
 
 #define N 3
 #define M 50000000

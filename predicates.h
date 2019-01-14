@@ -2,7 +2,6 @@
 #define _PREDICATES_H__
 #include "rhj.h"
 #include "inbetween.h"
-#include "trees.h"
 
 typedef struct relation_data relation_data;
 typedef struct all_data all_data;
@@ -46,14 +45,16 @@ batch *InitBatch();
 batch *AddToBatch();
 void FreeBatch(batch *b);
 
+float instead_of_pow(float a, float b);
+int search_table (int ** join_table,int size_of_table, int r, int c);
 void seperate_predicate (char * input, char * tokens[3]);
 void print_predicates (predicates ** predicates,int num_predicates);
 int find_num_of_predicates (char * token);
 int make_number (int num_length,char * compute_num, int j);
 predicates **fill_predicates (char * token, int num_predicates);
-int select_predicate (int , predicates **,relation_data **,int , inbetween_results *);
+int select_predicate(int * curr_join, int numofPredicates, predicates ** input_predicates,relation_data ** datatable, inbetween_results *res, int * order_of_joins);
 void execute_query(query *in_query,all_data *data);
-predicate * make_predicate (int rel1, int col1, int rel2, int col2, char op);
+predicates * make_predicate (int rel1, int col1, int rel2, int col2, char op);
 void restore_statistics (relation_data ** relations, int rel);
 float update_statistics(relation_data ** relations, predicates * curr_pred);
 #endif

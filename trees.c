@@ -5,8 +5,10 @@
 #include <stdint.h>
 #include <ctype.h>
 #include "trees.h"
+#include "rhj.h"
 #include "predicates.h"
 #include <stdio.h>
+
 tree * new(relation_data ** relations, int r1, int c1, int r2, int c2){
 
   tree * leaf1 = malloc(sizeof(tree));
@@ -24,16 +26,17 @@ tree * new(relation_data ** relations, int r1, int c1, int r2, int c2){
   tree * join = malloc(sizeof(tree));
   join->rel = -1;//join
   predicates * curr_pred = malloc(sizeof(predicates));
-  curr_pred =make_predicate(r1,c1,r2,c2,'=');
+  curr_pred = make_predicate(r1,c1,r2,c2,'=');
   join->col = update_statistics(relations,curr_pred);//find cost
   join ->l = leaf1;
   join ->r = leaf2;
   return join;
 }
-tree * insert ( relation_data ** relations, tree * root, int r, int c,)
+tree * insert ( relation_data ** relations, tree * root, int r, int c)
 {
   tree * leaf = malloc(sizeof(tree));
   tree * view_leaf =  malloc(sizeof(tree));
+  predicates * curr_pred = malloc(sizeof(predicates));
   leaf->rel = r;
   leaf->col = c;
   leaf->l = NULL;
@@ -41,11 +44,12 @@ tree * insert ( relation_data ** relations, tree * root, int r, int c,)
   tree * join = malloc(sizeof(tree));
   join->rel = -1;//join
   view_leaf = root;
-  while (view_leaf==-1)
-  {
-    view_leaf = view_leaf->l;
-  }
-  predicates * curr_pred =make_predicate(view_leaf->r->rel,view_leaf->->r->col,r,c,'=');
+  view_leaf = view_leaf->l;
+  if (view_leaf->r==NULL)
+  curr_pred = make_predicate(view_leaf->rel,view_leaf->col,r,c,'=');
+  else
+  curr_pred = make_predicate(view_leaf->r->rel,view_leaf->r->col,r,c,'=');
+  printf("ftiaksame ena oreotato predicate %d.%d %c %d.%d",curr_pred->rel1,curr_pred->col1,curr_pred->op,curr_pred->rel2,curr_pred->col2);
   join->col = update_statistics(relations,curr_pred);//find cost
   join->rel = -1;//join
   join ->l = root;
@@ -56,19 +60,19 @@ void restore_data(tree * root, relation_data ** relations)
 {
     tree * view_leaf =  malloc(sizeof(tree));
     view_leaf = root;
-    restore_statistics (relations, view_leaf->r);
+    restore_statistics (relations, view_leaf->r->rel);
     view_leaf = view_leaf->l;
     while (1)
     {
-    restore_statistics (relations, view_leaf->r);
+    restore_statistics (relations, view_leaf->r->rel);
     if (view_leaf->l->rel!=-1)
-      {restore_statistics (relations, view_leaf->l);
+      {restore_statistics (relations, view_leaf->l->rel);
        break;
      }
      else
       view_leaf= view_leaf->l;
+    }
 }
-
 int calculate_total_cost(tree * root)
 {
   int sum=0;
@@ -77,13 +81,13 @@ int calculate_total_cost(tree * root)
   sum+=view_leaf->col;
   while (1)
   {
-    if (view_leaf!=NULL)
+    if (view_leaf->l!=NULL)
     {
     view_leaf= view_leaf->l;
     }
     else
       break;
-    if (view_leaf!=NULL)
+    if (view_leaf->l!=NULL)
     {
     view_leaf= view_leaf->l;
     }
@@ -93,63 +97,87 @@ int calculate_total_cost(tree * root)
   }
   printf("total cost is %d",sum);
   return sum;
-
+}
 
 //execute
-char execute (tree * root, int * r1, int * r2, int * c1, int * c2)
+int execute (tree * root, predicates ** predicate, int numofPredicates)
 {
+  int i;
+  int predicate_to_return=-1;
   tree * view_leaf =  malloc(sizeof(tree));
-  view_leaf = root;
-  if (view_leaf->l==NULL || view_leaf->r ==NULL)
+  tree * trans_leaf = malloc(sizeof(tree));
+  trans_leaf = root;
+  if (trans_leaf->l==NULL || trans_leaf->r ==NULL)
   {
     printf("No more predicates remaning!\n");
-    return 0;
+    return -1;
   }
-  while(view_leaf->l->l!=NULL)
+  while(trans_leaf->l!=NULL)
   {
-    view_leaf = view_leaf->l;
+    view_leaf = trans_leaf;
+    trans_leaf = trans_leaf->l;
   }
-  printf("making predicate\n");
-  pred = malloc(sizeof(predicates));
-  predicates * pred =  make_predicate(view_leaf->l->rel, view_leaf->l->col, view_leaf->r->rel, view_leaf->r->col, '=');
-//exec pred
-  printf("now we will execute predicate %d.%d = %d.%d",pred->rel1,pred->col1,pred->rel2,pred->col2)
+  //find to predicate auto
+  for (i=0;i<numofPredicates;i++)
+  {
+    if ((predicate[i]->rel1==view_leaf->l->rel && predicate[i]->col1==view_leaf->l->col && predicate[i]->rel2==view_leaf->r->rel && predicate[i]->col2==view_leaf->r->col && predicate[i]->op=='=') || (predicate[i]->rel2==view_leaf->l->rel && predicate[i]->col2==view_leaf->l->col && predicate[i]->rel1==view_leaf->r->rel && predicate[i]->col1==view_leaf->r->col && predicate[i]->op=='='))//anapoda
+      {
+        predicate_to_return  = i;
+        printf("We will return predicate %d\n",predicate_to_return);
+      }
+  }
+  if (predicate_to_return==-1)
+    printf("paixtike malakia, den brikame to predicate\n\n\n");
   free(view_leaf->l);
   view_leaf->rel= view_leaf->r->rel;
   view_leaf->col = view_leaf->r->col;
   free(view_leaf->r);
-
+  return predicate_to_return;
 
 }
 
 
-int connected(predicates ** predicates, int num_predicates, int rel1, int col1, int rel2, int col2)
+int connected(predicates ** predicate, int num_predicates, int rel1, int col1, int rel2, int col2)
 {
   int i;
+//  printf("we are trying to find %d.%d = %d.%d|",rel1,col1,rel2,col2);
   for (i=0;i<num_predicates;i++)
   {
-    if ((predicates[i]->rel1 == rel1) && (predicates[i]->col1==col1) && (predicates[i]->op=='=') && (predicates[i]->rel2 = rel2) && (predicates[i]->col2==col2))
+//    printf("[Now checking predicate %d.%d %c %d.%d]\n",predicate[i]->rel1,predicate[i]->col1,predicate[i]->op, predicate[i]->rel2,predicate[i]->col2);
+    if ((predicate[i]->rel1 == rel1) && (predicate[i]->col1==col1) && (predicate[i]->op=='=') && (predicate[i]->rel2 == rel2) && (predicate[i]->col2==col2)
+    || (predicate[i]->rel1 == rel2) && (predicate[i]->col1==col2) && (predicate[i]->op=='=') && (predicate[i]->rel2 == rel1) && (predicate[i]->col2==col1))//h anapoda
       {
-        printf("connected\n");
+  //      printf("connected\n");
         return 1;
       }
   }
   return 0;
 }
-//function to print the array
-void printarray(exec_information ** store_information, int * store_info_counter, relation_data ** relations, predicates ** predicates, int num_predicates, int ** arr, int size)
+void permutation_to_trees(exec_information ** store_information, int * store_info_counter, relation_data ** relations, predicates ** predicate, int num_predicates, int ** arr, int size)
 {
     int i,j;
+    char flag=1;
     for(i=0; i<size; i++)
     {
-        printf("{%d.%d}\t",arr[i][0], arr[i][1]);
+  //      printf("{%d.%d}\t",arr[i][0], arr[i][1]);
+    }
+    for(i=0; i<size; i++)
+    {
         if (i!=size-1)
-        if (connected(predicates, num_predicates,arr[i][0], arr[i][1], arr[i+1][0], arr[i+1][1])==0)
+        if (connected(predicate, num_predicates,arr[i][0], arr[i][1], arr[i+1][0], arr[i+1][1])==0)
           {
-            printf("!!!oou, den einai connected!!!");
+            flag=0;
             return;
           }
     }
+    if (flag==1)
+    {printf("!!Brikame chain!!!\n----------\n");
+    for(i=0; i<size; i++)
+    {
+        printf("{%d.%d}\t",arr[i][0], arr[i][1]);
+    }
+    printf("-----------------\n");
+  }
 //edw tha dimourgisei to tree based on pinaka arr
     printf("Now creating tree. O theos boithos\n");
     tree * cost_tree = malloc(sizeof(tree));
@@ -158,9 +186,10 @@ void printarray(exec_information ** store_information, int * store_info_counter,
     {
       cost_tree = insert (relations, cost_tree,arr[i][0],arr[i][1]);
     }
-    store_information[store_info_counter]->exec_tree=cost_tree;
-    store_information[store_info_counter]->total_cost=calculate_total_cost(cost_tree);
-    store_info_counter++;
+    printf("aide kai to balame to tree mas. tora to xonoume stin thesi %d\n\n\n",*store_info_counter);
+    store_information[*store_info_counter]->exec_tree=cost_tree;
+    store_information[*store_info_counter]->total_cost=calculate_total_cost(cost_tree);
+    (*store_info_counter)++;
     restore_data(cost_tree,relations);
 }
 //function to swap the variables
@@ -174,43 +203,50 @@ void swap(int ** arr, int a, int b)
     arr[b][1] = col_temp;
 }
 //permutation function
-void permutation(exec_information ** store_information, int * store_info_counter, relation_data ** relations,predicates ** predicates, int num_predicates, int ** arr, int start, int end)
+void permutation(exec_information ** store_information, int * store_info_counter, relation_data ** relations,predicates ** predicate, int num_predicates, int ** arr, int start, int end)
 {
     int i;
     if(start==end)
     {
-        printarray(store_information,store_info_counter, relations, predicates, num_predicates, arr, end+1);
+        permutation_to_trees(store_information,store_info_counter, relations, predicate, num_predicates, arr, end+1);
         return;
     }
     for(i=start;i<=end;i++)
     {
         swap(arr, i,start);
-        permutation(arr, start+1, end);
+        permutation(store_information, store_info_counter, relations, predicate,num_predicates,arr, start+1, end);
         swap(arr, i, start);
     }
 }
-void find_permutations (exec_information ** store_information, predicates ** predicates, int num_predicates, int ** join_table, int size)
+int  * find_permutations (int num_of_join_pred, int * order_of_joins, relation_data ** relations, predicates ** predicate, int num_predicates, int ** join_table)
 {
-  int i,x=size;
-  store_information = malloc(sizeof(exec_information*));
-  for (i=size-1;i--;i>0)
+  int i,x=num_predicates;
+  exec_information ** store_information;
+  for (i=num_predicates-1;i>0;i--)
     x = x * i;//we wiil make x trees
-  for (i=0;i++;i<x)
+  store_information = (exec_information**)malloc(x*sizeof(exec_information*));
+  for (i=0;i<x;i++)
     {
-     store_information[i] = malloc(sizeof(exec_information));
-     store_information[i]->exec_tree = malloc(sizeof(tree));
+     store_information[i] = (exec_information*)malloc(sizeof(exec_information));
+     store_information[i]->exec_tree = (tree*)malloc(sizeof(tree));
      store_information[i]->total_cost = -1;
     }
-    int * store_info_counter=0;
-    permutation(store_information, store_info_counter, relations, predicates,  num_predicates, join_table, 0, size-1);
+    printf("Kaname %d mallocs\n",i);
+    int * store_info_counter=malloc(sizeof(int));
+    *store_info_counter=0;
+    permutation(store_information, store_info_counter, relations, predicate,  num_predicates, join_table, 0, num_of_join_pred-1);//edw anti gia num pred -1 mporei na thelei apla na balw "2"
     int selected_tree = find_min_cost(store_information);
     printf("We have chosen a tree with cost %d",store_information[selected_tree]->total_cost);
-    execute (store_information[selected_tree]->exec_tree);
+    for (i=0;i<num_of_join_pred;i++)
+    {
+        order_of_joins[i] = execute (store_information[selected_tree]->exec_tree, predicate, num_predicates);
+    }
 
     for (i=0;i++;i<x)
       {free (store_information[i]->exec_tree);
        free (store_information[i]);
       }
+    return order_of_joins;
 }
 
 int find_min_cost (exec_information ** store_information)

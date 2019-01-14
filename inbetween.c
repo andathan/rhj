@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "inbetween.h"
+#include "trees.h"
 
 inbet_node *InitInbetNode(){
   inbet_node *node = malloc(sizeof(inbet_node));

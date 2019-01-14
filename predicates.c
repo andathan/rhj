@@ -5,12 +5,16 @@
 #include <stdint.h>
 #include <ctype.h>
 #include "predicates.h"
+#include "rhj.h"
 #include "trees.h"
 
-
-predicate * make_predicate (int rel1, int col1, int rel2, int col2, char op)
+float instead_of_pow(float a, float b)
 {
-  predicate * new_pred = malloc(sizeof(predicate));
+  return 0.1;
+}
+predicates * make_predicate (int rel1, int col1, int rel2, int col2, char op)
+{
+  predicates * new_pred = malloc(sizeof(predicates));
   new_pred->rel1 = rel1;
   new_pred->col1= col1;
   new_pred->op = op;
@@ -19,10 +23,10 @@ predicate * make_predicate (int rel1, int col1, int rel2, int col2, char op)
 }
 void restore_statistics (relation_data ** relations, int rel)
 {
-  int i;
+  int i,k;
   relation_data * r2data;
-  if (rel1!=-1)
-    r2data = relations[rel1];
+  if (rel!=-1)
+    r2data = relations[rel];
 
   for (k=0;k<r2data->numColumns;k++)
   {
@@ -35,21 +39,35 @@ void restore_statistics (relation_data ** relations, int rel)
 
 }
 float update_statistics(relation_data ** relations, predicates * curr_pred){
+  //first keep old values in case we need to restore them
+  //for table A
   int curr_column = curr_pred->col1,k;
   float old_d,second_old_d;
-  relation_data * r2data, * second_r2data;
+  relation_data * r2data,* second_r2data;
   if (curr_pred->rel1!=-1)
     r2data = relations[curr_pred->rel1];
   if (curr_pred->rel2!=-1)
     {
     second_r2data = relations[curr_pred->rel2];
-    printf("d is %f\n",second_r2data->columns[curr_pred->col2]->d);
+    printf("\nPaw na tou zitiso ths rel %d to col %d\n",curr_pred->rel2,curr_pred->col2);
+//    printf("d is %f\n",second_r2data->columns[curr_pred->col2]->d);
     }
   else
     second_r2data = NULL;
   int i = curr_column;
   float n = (float)(r2data->columns[i]->u - r2data->columns[i]->l +1);
   float old_f= r2data->columns[i]->f;//used for storing previous f value
+  for (k=0;k<r2data->numColumns;k++)
+  {
+    if (r2data->columns[k]->restored==0)//store data only if its the first call. this protects that from storing intermediate results in the restoring section
+    {
+    r2data->columns[k]->prev_l =r2data->columns[k]->l;
+    r2data->columns[k]->prev_u =r2data->columns[k]->u;
+    r2data->columns[k]->prev_f =r2data->columns[k]->f;
+    r2data->columns[k]->prev_d =r2data->columns[k]->d;
+    r2data->columns[k]->restored=1;
+    }
+  }
   if (curr_pred->rel2==-1 && curr_pred->op=='=')//R.A = k
   {
     if (r2data->columns[i]->u-r2data->columns[i]->l+1<M) //we have a tabe of size u- l+1
@@ -92,7 +110,7 @@ float update_statistics(relation_data ** relations, predicates * curr_pred){
     {
       if (i==curr_column)
         continue;
-        r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -pow((1.0- (r2data->columns[curr_column]->f/old_f)),r2data->columns[i]->f/r2data->columns[i]->d));
+        r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -instead_of_pow((1.0- (r2data->columns[curr_column]->f/old_f)),r2data->columns[i]->f/r2data->columns[i]->d));
         r2data->columns[i]->f = r2data->columns[curr_column]->f;
     }
   }
@@ -109,7 +127,7 @@ float update_statistics(relation_data ** relations, predicates * curr_pred){
     {
       if (i==curr_column)
         continue;
-      r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -pow((1.0- (r2data->columns[curr_column]->f/old_f)),r2data->columns[i]->f/r2data->columns[i]->d));
+      r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -instead_of_pow((1.0- (r2data->columns[curr_column]->f/old_f)),r2data->columns[i]->f/r2data->columns[i]->d));
       r2data->columns[i]->f = r2data->columns[curr_column]->f;
     }
   }
@@ -126,7 +144,7 @@ float update_statistics(relation_data ** relations, predicates * curr_pred){
     {
       if (i==curr_column)
         continue;
-      r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -pow((1.0- (r2data->columns[curr_column]->f/old_f)),r2data->columns[i]->f/r2data->columns[i]->d));
+      r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -instead_of_pow((1.0- (r2data->columns[curr_column]->f/old_f)),r2data->columns[i]->f/r2data->columns[i]->d));
       r2data->columns[i]->f = r2data->columns[curr_column]->f;
     }
 }
@@ -150,13 +168,13 @@ float update_statistics(relation_data ** relations, predicates * curr_pred){
     }
     r2data->columns[i]->f = r2data->columns[i]->f/n;
     r2data->columns[curr_pred->col2]->f =  r2data->columns[i]->f;
-    r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -pow((1.0- (r2data->columns[curr_column]->f/old_f)),(r2data->columns[i]->f/r2data->columns[i]->d)));
+    r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -instead_of_pow((1.0- (r2data->columns[curr_column]->f/old_f)),(r2data->columns[i]->f/r2data->columns[i]->d)));
     r2data->columns[curr_pred->col2]->d = r2data->columns[i]->d;
     for (i=0;i<r2data->numColumns;i++)
     {
       if (i==curr_column)
         continue;
-      r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -pow((1.0- (r2data->columns[curr_column]->f/old_f)),r2data->columns[i]->f/r2data->columns[i]->d));
+      r2data->columns[i]->d = r2data->columns[i]->d * (1.0 -instead_of_pow((1.0- (r2data->columns[curr_column]->f/old_f)),r2data->columns[i]->f/r2data->columns[i]->d));
       r2data->columns[i]->f = r2data->columns[curr_column]->f;
     }
   }
@@ -172,19 +190,7 @@ float update_statistics(relation_data ** relations, predicates * curr_pred){
   }
   else //join metaksi 2 pinakon
   {
-    //first keep old values in case we need to restore them
-    //for table A
-    for (k=0;k<r2data->numColumns;k++)
-    {
-      if (r2data->columns[k]->restored==0)//store data only if its the first call. this protects that from storing intermediate results in the restoring section
-      {
-      r2data->columns[k]->prev_l =r2data->columns[k]->l;
-      r2data->columns[k]->prev_u =r2data->columns[k]->u;
-      r2data->columns[k]->prev_f =r2data->columns[k]->f;
-      r2data->columns[k]->prev_d =r2data->columns[k]->d;
-      r2data->columns[k]->restored=1;
-      }
-    }
+
     //for table B
     for (k=0;k<second_r2data->numColumns;k++)
     {
@@ -227,9 +233,9 @@ float update_statistics(relation_data ** relations, predicates * curr_pred){
     {
       if (i==curr_column)
         continue;
-      printf("\nd of i column is %f| d of curr_column %f| old_d is %f| f of i columns is %f | d of i column is %f\n", r2data->columns[i]->d , r2data->columns[curr_column]->d,old_d,r2data->columns[i]->f,r2data->columns[i]->d);
-      r2data->columns[i]->d = r2data->columns[i]->d * (1.0 - pow((1.0 - (r2data->columns[curr_column]->d/old_d)),r2data->columns[i]->f/r2data->columns[i]->d));
-      printf("Thus, new d is %f\n",r2data->columns[i]->d );
+  //    printf("\nd of i column is %f| d of curr_column %f| old_d is %f| f of i columns is %f | d of i column is %f\n", r2data->columns[i]->d , r2data->columns[curr_column]->d,old_d,r2data->columns[i]->f,r2data->columns[i]->d);
+      r2data->columns[i]->d = r2data->columns[i]->d * (1.0 - instead_of_pow((1.0 - (r2data->columns[curr_column]->d/old_d)),r2data->columns[i]->f/r2data->columns[i]->d));
+  //   printf("Thus, new d is %f\n",r2data->columns[i]->d );
       r2data->columns[i]->f = r2data->columns[curr_column]->f;
     }
     //for table B
@@ -237,14 +243,14 @@ float update_statistics(relation_data ** relations, predicates * curr_pred){
     {
       if (i==curr_pred->col2)
         continue;
-      printf("(second) d of i column is %f| d of curr_column %f| old_d is %f| f of i columns is %f | d of i column is %f, pow is %f\n", second_r2data->columns[i]->d,second_r2data->columns[curr_column]->d,second_old_d,second_r2data->columns[i]->f,second_r2data->columns[i]->d,pow((1.0 - (second_r2data->columns[curr_column]->d/second_old_d)),second_r2data->columns[i]->f/second_r2data->columns[i]->d));
-      second_r2data->columns[i]->d = second_r2data->columns[i]->d * (1.0 -pow((1.0 - (second_r2data->columns[curr_column]->d/second_old_d)),second_r2data->columns[i]->f/second_r2data->columns[i]->d));
+  //    printf("(second) d of i column is %f| d of curr_column %f| old_d is %f| f of i columns is %f | d of i column is %f, instead_of_pow is %f\n", second_r2data->columns[i]->d,second_r2data->columns[curr_column]->d,second_old_d,second_r2data->columns[i]->f,second_r2data->columns[i]->d,instead_of_pow((1.0 - (second_r2data->columns[curr_column]->d/second_old_d)),second_r2data->columns[i]->f/second_r2data->columns[i]->d));
+      second_r2data->columns[i]->d = second_r2data->columns[i]->d * (1.0 -instead_of_pow((1.0 - (second_r2data->columns[curr_column]->d/second_old_d)),second_r2data->columns[i]->f/second_r2data->columns[i]->d));
       second_r2data->columns[i]->f = second_r2data->columns[curr_column]->f;
-        printf("(second) Thus, new d is %f\n",second_r2data->columns[i]->d );
+//        printf("(second) Thus, new d is %f\n",second_r2data->columns[i]->d );
     }
   }
-  printf("Statistics Updated! New stats:\n Low %ju \n Upper %ju \n Arithmos Stoixeion %f \n Arithmos Monadikon Stoixeion %f\n",r2data->columns[curr_column]->l, r2data->columns[curr_column]->u,r2data->columns[curr_column]->f,r2data->columns[curr_column]->d);
-  return r2data->columns[i]->f;
+//  printf("Statistics Updated! New stats:\n Low %ju \n Upper %ju \n Arithmos Stoixeion %f \n Arithmos Monadikon Stoixeion %f\n",r2data->columns[curr_column]->l, r2data->columns[curr_column]->u,r2data->columns[curr_column]->f,r2data->columns[curr_column]->d);
+  return r2data->columns[curr_column]->f;
   //sto join metaksi 2 pinakwn, h prosvasi ston deutero pinaka na ginetai meso ths second_r2data. na kanw tis katalliles allages
 }
 
@@ -342,18 +348,31 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
 
 void execute_query(query *in_query,all_data *data){
   relation_data **relations = find_corresponding(in_query,data);
+  int * order_of_joins = NULL;
+  int * curr_join = malloc(sizeof(int));
+  *curr_join=0;
   int next_pred=-1;
   inbetween_results *inb_res=InitInbetResults(in_query->num_of_relations);
   for(int i=0;i<in_query->num_of_predicates;i++){
-    next_pred = select_predicate(in_query->num_of_predicates,in_query->katigorimata,relations,next_pred,inb_res);
+    next_pred = select_predicate(curr_join,in_query->num_of_predicates,in_query->katigorimata,relations,inb_res,order_of_joins);
     printf("Next pred is %d\n",next_pred);
     printf("Now updating statistics...\n");
     update_statistics(relations,in_query->katigorimata[next_pred]);
     inb_res = execute_predicate(in_query->katigorimata[next_pred],relations,inb_res);
     in_query->katigorimata[next_pred]->op= '.';
   }
+  for (int k=0;k<in_query->num_of_predicates;k++)
+  {
+  restore_statistics(relations, in_query->katigorimata[k]->rel1);
+  if (in_query->katigorimata[k]->rel2!=-1)
+    restore_statistics(relations, in_query->katigorimata[k]->rel2);
+  }
+  printf("-------------------\n");
   show_results(inb_res,relations,in_query->proboles);
+  printf("\n-------------------\n");
   //free inb_res , relations
+  free (curr_join);
+  free (order_of_joins);
 }
 void seperate_predicate (char * input, char * temp_tokens[3] )
 {
@@ -400,7 +419,7 @@ int make_number (int num_length,char * compute_num, int j)
   int build_num=0;
   for (k=num_length;k>1;k--)
   {
-    build_num+= pow(10,(k-1))*(compute_num[j-k]-'0');
+    build_num+= instead_of_pow(10,(k-1))*(compute_num[j-k]-'0');
   }
   build_num += compute_num[j-k]-'0';
   return build_num;
@@ -475,76 +494,96 @@ predicates **fill_predicates (char * token, int num_predicates)
   }
   return pred;
 }
-
-int select_predicate(int numofPredicates, predicates ** input_predicates,relation_data ** datatable, int previous_predicate,inbetween_results *res){
-//girnaei ton arithmo me to predicate pou prepei na ektelesoume prota. theloume prota auta pou tha bgoun grigora
+int search_table (int ** join_table,int size_of_table, int r, int c)
+{
+  printf(">Checking given %d.%d< \n",r,c);
+  int i;
+  if (size_of_table==-1)
+    return 1;
+  for (i=0;i<=size_of_table;i++)
+  {
+    printf("Checking jt %d.%d with given %d.%d\n",join_table[i][0],join_table[i][1],r,c);
+    if ((join_table[i][0]==r) && (join_table[i][1]==c))
+      return 0;
+  }
+  printf("den to brika\n");
+  return 1;
+}
+int select_predicate(int * curr_join, int numofPredicates, predicates ** input_predicates,relation_data ** datatable, inbetween_results *res, int * order_of_joins){
   /*
     epistrefei to predicate pou tha ektelestei. ekteloume prota ta filtra.
-    apo ta filtra dinoume perissotero baros se auta pou exoun megalo ginomeno diaspora * apostasi teleutaias timis apo to filtro.
-     meta ta joins
   */
-  int i,return_predicate=-1,weight,constant,distance_to_filter=0,rel,col,max,min;
-  int best=0;
+  int num_of_join_rel;
+  int i,j,return_predicate=-1,weight,constant,distance_to_filter=0,rel,col,max,min;
+  int ** join_table;
+  int executed_pred=0;
   int min_weight=-1;
+  int num_of_join_pred;
   char no_more_filters=1;
   char select_filters = 1;
   int prev_rel;
   int prev_col;
-
-  for (int j=0;j<numofPredicates;j++){
-    if (input_predicates[j]->op!='.'){
-      return j;
+  for (int j=0;j<numofPredicates;j++)
+  {
+    if (input_predicates[j]->op!='.' && input_predicates[j]->rel2==-1)
+    {
+      return j;//we have filters just return one
+    }
+    else if (input_predicates[j]->op=='.')
+      executed_pred++;
+  }
+printf("Telos me ta filtra. Pame sta joinakia mas\n");
+//meta ta join
+if (order_of_joins == NULL)
+{
+  num_of_join_pred = numofPredicates-executed_pred;
+  if (num_of_join_pred==1)//an einai ena tsilare apla kane return
+  {
+    for (int j=0;j<numofPredicates;j++)
+    {
+      if (input_predicates[j]->op!='.')
+      {
+        return j;
+      }
     }
   }
-/*
-  for (int j=0;j<numofPredicates;j++){
-    if ((input_predicates[j]->rel1 == -1 || input_predicates[j]->rel2 == -1) && input_predicates[j]->op!='.'){
-      no_more_filters = 0;
-      break;
-    }
-  }
-  if (no_more_filters==1)//teleiosame me ta filters, pame sta joins
-    select_filters = 0;
-  for(i=0;i<numofPredicates;i++){
-    if(previous_predicate!=-1 && res->joined[input_predicates[i]->rel1]==-1 && res->joined[input_predicates[i]->rel2]==-1 ){
+  printf("num of join pred is %d because numofPredicates is %d and executed_pred is %d||",num_of_join_pred,numofPredicates,executed_pred);
+  order_of_joins = (int*)malloc(sizeof(int)*(num_of_join_pred)); //we have these many joins
+  join_table = (int**)malloc(sizeof(int*)*2*num_of_join_pred);
+  i=0;
+  j=-1;
+  while (i<numofPredicates)
+  {
+//    printf("\nTore blepoume to predicate %d.%d = %d.%d\n",input_predicates[i]->rel1,input_predicates[i]->col1,input_predicates[i]->rel2,input_predicates[i]->col2);
+    if ((input_predicates[i]->op!='=') || (input_predicates[i]->rel2==-1))
+      {
+        i++;
         continue;
-    }
-    if(select_filters==1){
-      if ((input_predicates[i]->rel1 == -1 || input_predicates[i]->rel2 == -1) && input_predicates[i]->op != '.'  ){ //einai filtro && den exei ektelestei
-        if (input_predicates[i]->rel1==-1){
-          constant = input_predicates[i]->col1;
-          rel = input_predicates[i]->rel2;
-          col = input_predicates[i]->col2;
-        }else{
-          constant = input_predicates[i]->col2;
-          rel = input_predicates[i]->rel1;
-          col = input_predicates[i]->col1;
-        }
-        if (input_predicates[i]->op == '<'){
-          distance_to_filter =   datatable[rel]->columns[col]->max - constant;
-          weight = datatable[rel]->columns[col]->spread  * distance_to_filter;
-        }else if (input_predicates[i]->op =='>'){
-          distance_to_filter = datatable[rel]->columns[col]->min -constant;
-          weight = datatable[rel]->columns[col]->spread  * distance_to_filter;
-        }else{
-          weight = datatable[rel]->columns[col]->spread;
-        }
-        if (distance_to_filter<0){ // theloume apoliti timi
-          distance_to_filter= distance_to_filter *(-1);
-        }
-        if (weight<min_weight || min_weight==-1){//an exoume proti epanalipsi
-          min_weight = weight;
-          return_predicate = i;
-        }
       }
-    }
-    if (select_filters == 0){//den exw alla filtra h exw metaksi sxeseon
-      if((input_predicates[i]->rel1 != -1 &&  input_predicates[i]->rel2 != -1) && input_predicates[i]->op != '.' ){ // join pou den exei ginei
-            return_predicate = i;
-      }
-    }
+    j++;
+    join_table[j] = malloc(2* sizeof(int));
+    join_table[j][0]=input_predicates[i]->rel1;
+    join_table[j][1]=input_predicates[i]->col1;
+  //  printf("Empiksa to %d.%d\n",    join_table[j][0],    join_table[j][1]);
+    j++;
+    join_table[j] = malloc(2* sizeof(int));
+    join_table[j][0]=input_predicates[i]->rel2;
+    join_table[j][1]=input_predicates[i]->col2;
+  //  printf("Empiksa to %d.%d\n",    join_table[j][0],    join_table[j][1]);
+    i++;
   }
-  */
+  num_of_join_rel = ++j;
+  printf("we have created the following join table with %d rels\n",num_of_join_rel);
+  for (j=0;j<num_of_join_rel;j++)
+  {
+    printf("[%d.%d]\n\n", join_table[j][0],join_table[j][1]);
+  }
+  order_of_joins = find_permutations (num_of_join_rel, order_of_joins, datatable, input_predicates, numofPredicates, join_table);
+}
+  printf("returning pred %d\n",order_of_joins[*curr_join]);
+  (*curr_join)++;
+  return order_of_joins[*curr_join];
+
 }
 
 void FreeBatch(batch *b){

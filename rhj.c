@@ -1,4 +1,5 @@
 #include "rhj.h"
+#include "trees.h"
 #include "inbetween.h"
 
 int *make_histogram(Relation *in_relation){

@@ -52,9 +52,9 @@ void print_predicates (predicates ** predicates,int num_predicates);
 int find_num_of_predicates (char * token);
 int make_number (int num_length,char * compute_num, int j);
 predicates **fill_predicates (char * token, int num_predicates);
-int select_predicate(int * curr_join, int numofPredicates, predicates ** input_predicates,relation_data ** datatable, inbetween_results *res, int * order_of_joins);
+int select_predicate(int * curr_join, int *, int numofPredicates, predicates ** input_predicates,relation_data ** datatable, inbetween_results *res, int * order_of_joins, int *);
 void execute_query(query *in_query,all_data *data);
 predicates * make_predicate (int rel1, int col1, int rel2, int col2, char op);
 void restore_statistics (relation_data ** relations, int rel);
-float update_statistics(relation_data ** relations, predicates * curr_pred);
+float update_statistics(relation_data ** relations, predicates **, int );
 #endif

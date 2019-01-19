@@ -5,6 +5,7 @@
 struct tree{
   int rel;
   int col;
+  int pred_num;
   struct tree *l;
   struct tree *r;
 };
@@ -16,8 +17,10 @@ struct exec_information{
 };
 typedef struct exec_information exec_information;
 
-tree * new(relation_data ** relations, int r1, int r2, int c1, int c2);
-tree * insert(relation_data ** relations, tree * root, int r, int c);
+
+int find_pred_num(predicates ** predicate ,int num_predicates,int r1, int c1, int r2, int c2, char op);
+tree * new(relation_data ** relations, int r1, int r2, int c1, int c2, predicates **,  int);
+tree * insert(relation_data ** relations, tree * root, int r, int c, predicates **, int );
 void restore_data(tree * root, relation_data ** relations);
 int calculate_total_cost(tree * root);
 int execute (tree * root, predicates **, int);
@@ -26,5 +29,5 @@ void permutation_to_trees(exec_information ** store_information, int * store_inf
 void swap(int ** arr, int a, int b);
 void permutation(exec_information ** store_information, int * store_info_counter, relation_data ** relations,predicates ** predicates, int num_predicates, int ** arr, int start, int end);
 int * find_permutations (int, int *, relation_data ** relations, predicates ** predicates, int num_predicates, int ** join_table);
-int find_min_cost (exec_information ** store_information);
+int find_min_cost (exec_information ** store_information, int store_info_counter);
 #endif

@@ -97,6 +97,7 @@ relation_data *parsefile(char * filename){
     r2data->columns[i]->num_tuples = numofTuples;
   }
   r2data->numColumns = numofColumns;
+//  printf("Has %ju colums\n\n",r2data->numColumns);
   r2data->numTuples = numofTuples;
   char c;
   for(int i=0;i<numofColumns;i++){

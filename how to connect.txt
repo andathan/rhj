@@ -1,0 +1,43 @@
+Καινουργια αρχεια:
+tree.c
+tree.h
++ καινούργιο Makefile
+
+Αλλαγές:
+predicates.c
+#include "trees.h"
+Από την γραμμή 11 έως την 270
+ΑΠό την 363 μέχρι την 393
+Από την 514 μέχρι την 671
+
+predicates.h
+
+float instead_of_pow(float a, float b);
+int search_table (int ** join_table,int size_of_table, int r, int c);
+int find_num_of_predicates (char * token);
+int select_predicate(int * curr_join, int *, int numofPredicates, predicates ** input_predicates,relation_data ** datatable, inbetween_results *res, int * order_of_joins, int *);
+
+predicates * make_predicate (int rel1, int col1, int rel2, int col2, char op);
+void restore_statistics (relation_data ** relations, int rel);
+float update_statistics(relation_data ** relations, predicates **, int );
+
+rhj.h
+
+struct Relation{
+  tuple  *tuples;   //pinakas apo tuples
+  uint32_t num_tuples;  //megethos pinaka
+  uint64_t l;//minimum value
+  uint64_t u;//maximum value
+  float f;//number of values
+  float d;//number of distinct values
+  char * d_table;//used for finding the d
+  uint64_t prev_l;//used for restoring the previous value when we create the exec trees
+  uint64_t prev_u;//used for restoring the previous value when we create exec _TREES_H__
+  float prev_f;// ""
+  float prev_d;// ""
+  char restored;
+};
+typedef struct Relation Relation;	
+
+datastore.c
+78 μέχρι 156

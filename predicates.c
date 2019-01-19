@@ -14,7 +14,7 @@ float instead_of_pow(float a, float b)
 }
 predicates * make_predicate (int rel1, int col1, int rel2, int col2, char op)
 {
-  predicates * new_pred = malloc(sizeof(predicates));
+  predicates * new_pred = (predicates*)malloc(sizeof(predicates));
   new_pred->rel1 = rel1;
   new_pred->col1= col1;
   new_pred->op = op;
@@ -38,24 +38,37 @@ void restore_statistics (relation_data ** relations, int rel)
   }
 
 }
-float update_statistics(relation_data ** relations, predicates * curr_pred){
+float update_statistics(relation_data ** relations, predicates ** predicate, int pred_num){
   //first keep old values in case we need to restore them
   //for table A
-  int curr_column = curr_pred->col1,k;
+  predicates * curr_pred;
+  curr_pred = (predicates*)malloc(sizeof(predicates));
+  curr_pred->rel1 = predicate[pred_num]->rel1;
+  curr_pred->col1 = predicate[pred_num]->col1;
+  curr_pred->rel2 = predicate[pred_num]->rel2;
+  curr_pred->col2 = predicate[pred_num]->col2;
+  curr_pred->op = predicate[pred_num]->op;
+  int curr_column = curr_pred->col1;
+  int k;
   float old_d,second_old_d;
   relation_data * r2data,* second_r2data;
   if (curr_pred->rel1!=-1)
-    r2data = relations[curr_pred->rel1];
+    {r2data = relations[curr_pred->rel1];
+//      printf("Curr pred rel 2 is %d with col2 %d\n",curr_pred->rel2,curr_pred->col2);
+    }
+//    else
+//    printf("its just -1");
   if (curr_pred->rel2!=-1)
     {
     second_r2data = relations[curr_pred->rel2];
-    printf("\nPaw na tou zitiso ths rel %d to col %d\n",curr_pred->rel2,curr_pred->col2);
+//    printf("\nPaw na tou zitiso ths rel %d to col %d\n",curr_pred->rel2,curr_pred->col2);
 //    printf("d is %f\n",second_r2data->columns[curr_pred->col2]->d);
     }
   else
     second_r2data = NULL;
   int i = curr_column;
-  float n = (float)(r2data->columns[i]->u - r2data->columns[i]->l +1);
+//  printf("Asking for %d of %d\n\n",curr_pred->rel1, curr_column);
+  float n = (r2data->columns[i]->u - r2data->columns[i]->l +1);
   float old_f= r2data->columns[i]->f;//used for storing previous f value
   for (k=0;k<r2data->numColumns;k++)
   {
@@ -79,7 +92,7 @@ float update_statistics(relation_data ** relations, predicates * curr_pred){
       }
       else if (r2data->columns[i]->d_table[(int)(curr_pred->col2 - r2data->columns[i]->l)]==1)
       {
-        printf("%d exists in d_table\n",curr_pred->col2);
+  //      printf("%d exists in d_table\n",curr_pred->col2);
         r2data->columns[i]->f=r2data->columns[i]->f/r2data->columns[i]->d;
         r2data->columns[i]->d=1.0;
       }
@@ -93,7 +106,7 @@ float update_statistics(relation_data ** relations, predicates * curr_pred){
     {
       if (r2data->columns[i]->d_table[(int)(curr_pred->col2-r2data->columns[i]->u)%M]==1)
         {
-          printf("%d exists in d_table\n",curr_pred->col2);
+  //        printf("%d exists in d_table\n",curr_pred->col2);
           r2data->columns[i]->f=r2data->columns[i]->f/r2data->columns[i]->d;
           r2data->columns[i]->d=1.0;
         }
@@ -241,6 +254,7 @@ float update_statistics(relation_data ** relations, predicates * curr_pred){
     //for table B
     for (i=0;i<second_r2data->numColumns;i++)
     {
+  //    printf("Num of colums is %ju and i is %d\n",second_r2data->numColumns,i);
       if (i==curr_pred->col2)
         continue;
   //    printf("(second) d of i column is %f| d of curr_column %f| old_d is %f| f of i columns is %f | d of i column is %f, instead_of_pow is %f\n", second_r2data->columns[i]->d,second_r2data->columns[curr_column]->d,second_old_d,second_r2data->columns[i]->f,second_r2data->columns[i]->d,instead_of_pow((1.0 - (second_r2data->columns[curr_column]->d/second_old_d)),second_r2data->columns[i]->f/second_r2data->columns[i]->d));
@@ -349,15 +363,18 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
 void execute_query(query *in_query,all_data *data){
   relation_data **relations = find_corresponding(in_query,data);
   int * order_of_joins = NULL;
-  int * curr_join = malloc(sizeof(int));
+  int * order_of_filters = NULL;
+  int * curr_join = (int*)malloc(sizeof(int));
+  int * curr_filter = (int*)malloc(sizeof(int));
   *curr_join=0;
+  *curr_filter=0;
   int next_pred=-1;
   inbetween_results *inb_res=InitInbetResults(in_query->num_of_relations);
   for(int i=0;i<in_query->num_of_predicates;i++){
-    next_pred = select_predicate(curr_join,in_query->num_of_predicates,in_query->katigorimata,relations,inb_res,order_of_joins);
+    next_pred = select_predicate(curr_join,curr_filter, in_query->num_of_predicates,in_query->katigorimata,relations,inb_res,order_of_joins,order_of_filters);
     printf("Next pred is %d\n",next_pred);
-    printf("Now updating statistics...\n");
-    update_statistics(relations,in_query->katigorimata[next_pred]);
+  //  printf("Now updating statistics of pred %d dld to pred %d.%d %c %d.%d...\n",next_pred,in_query->katigorimata[next_pred]->rel1,in_query->katigorimata[next_pred]->col1,in_query->katigorimata[next_pred]->op,in_query->katigorimata[next_pred]->rel2,in_query->katigorimata[next_pred]->col2);
+    update_statistics(relations,in_query->katigorimata,next_pred);
     inb_res = execute_predicate(in_query->katigorimata[next_pred],relations,inb_res);
     in_query->katigorimata[next_pred]->op= '.';
   }
@@ -419,7 +436,7 @@ int make_number (int num_length,char * compute_num, int j)
   int build_num=0;
   for (k=num_length;k>1;k--)
   {
-    build_num+= instead_of_pow(10,(k-1))*(compute_num[j-k]-'0');
+    build_num+= pow(10,(k-1))*(compute_num[j-k]-'0');
   }
   build_num += compute_num[j-k]-'0';
   return build_num;
@@ -496,46 +513,113 @@ predicates **fill_predicates (char * token, int num_predicates)
 }
 int search_table (int ** join_table,int size_of_table, int r, int c)
 {
-  printf(">Checking given %d.%d< \n",r,c);
+//  printf(">Checking given %d.%d< \n",r,c);
   int i;
   if (size_of_table==-1)
     return 1;
   for (i=0;i<=size_of_table;i++)
   {
-    printf("Checking jt %d.%d with given %d.%d\n",join_table[i][0],join_table[i][1],r,c);
+  //  printf("Checking jt %d.%d with given %d.%d\n",join_table[i][0],join_table[i][1],r,c);
     if ((join_table[i][0]==r) && (join_table[i][1]==c))
       return 0;
   }
-  printf("den to brika\n");
+  //printf("den to brika\n");
   return 1;
 }
-int select_predicate(int * curr_join, int numofPredicates, predicates ** input_predicates,relation_data ** datatable, inbetween_results *res, int * order_of_joins){
+int select_predicate(int * curr_join, int * curr_filter, int numofPredicates, predicates ** input_predicates,relation_data ** datatable, inbetween_results *res, int * order_of_joins, int * order_of_filters){
   /*
     epistrefei to predicate pou tha ektelestei. ekteloume prota ta filtra.
   */
-  int num_of_join_rel;
-  int i,j,return_predicate=-1,weight,constant,distance_to_filter=0,rel,col,max,min;
+  int num_of_join_rel,min,pos;
+  int i,j,return_predicate=-1,weight,constant,distance_to_filter=0,rel,col,max,k;
+  int ** filter_cost_table;
   int ** join_table;
+  char filters_remaining=0;
   int executed_pred=0;
   int min_weight=-1;
-  int num_of_join_pred;
-  char no_more_filters=1;
-  char select_filters = 1;
+  int num_of_filter_pred=0;
+  int num_of_join_pred=0;
   int prev_rel;
   int prev_col;
-  for (int j=0;j<numofPredicates;j++)
+  if (order_of_filters==NULL)
   {
-    if (input_predicates[j]->op!='.' && input_predicates[j]->rel2==-1)
+    for (j=0;j<numofPredicates;j++)
     {
-      return j;//we have filters just return one
+      if (input_predicates[j]->op!='.' && input_predicates[j]->rel2==-1)
+      {
+        num_of_filter_pred++;
+      }
     }
-    else if (input_predicates[j]->op=='.')
-      executed_pred++;
+    order_of_filters = (int*)malloc(sizeof(int)*num_of_filter_pred);
+    filter_cost_table = (int**)malloc(sizeof(int*)*num_of_filter_pred);
+    for (i=0;i<num_of_filter_pred;i++)
+      {
+        filter_cost_table[i] = malloc(sizeof(int)*2);
+      }
+    i=0;
+        for (k=0;k<numofPredicates;k++)
+        {
+          if (input_predicates[k]->op!='.' && input_predicates[k]->rel2==-1)
+          {
+            filter_cost_table[i][0] = k;
+            filter_cost_table[i][1] = update_statistics(datatable, input_predicates, k);
+            i++;
+          }
+        }
+        //restore the statistics
+        for (k=0;k<numofPredicates;k++)
+        {
+          if (input_predicates[k]->op!='.' && input_predicates[k]->rel2==-1)
+          {
+            restore_statistics (datatable, input_predicates[k]->rel1); 
+          }
+        }
+    for (int j=0; j<num_of_filter_pred;j++)
+    {
+      k=0;
+      while (filter_cost_table[k][1]==-1)
+        {
+          k++;
+        }
+      pos =k ;
+      min = filter_cost_table[k][1];
+      for (i=0;i<num_of_filter_pred;i++)
+        {
+          if (filter_cost_table[i][1]<min)
+          {
+            filter_cost_table[i][1]=min;
+            pos = i;
+          }
+        }
+        order_of_filters[j] = filter_cost_table[pos][0];
+        filter_cost_table[pos][1] = -1;
+      }
+
   }
-printf("Telos me ta filtra. Pame sta joinakia mas\n");
+    for (j=0;j<numofPredicates;j++)
+      {
+        if (input_predicates[j]->op!='.' && input_predicates[j]->rel2==-1)
+        {
+          filters_remaining = 1;
+          break;
+        }
+      }
+    if (filters_remaining==1)
+      {
+//      printf("Ekteloume to panemorfo filtraki me pred num %d\n",order_of_filters[(*curr_filter)]);
+      return order_of_filters[(*curr_filter)++];
+      }
+    else
+    {
+//printf("Telos me ta filtra. Pame sta joinakia mas\n");
 //meta ta join
 if (order_of_joins == NULL)
 {
+  for (int j=0;j<numofPredicates;j++)
+  {
+     if (input_predicates[j]->op=='.')
+      executed_pred++;
+  }
   num_of_join_pred = numofPredicates-executed_pred;
   if (num_of_join_pred==1)//an einai ena tsilare apla kane return
   {
@@ -547,7 +631,7 @@ if (order_of_joins == NULL)
       }
     }
   }
-  printf("num of join pred is %d because numofPredicates is %d and executed_pred is %d||",num_of_join_pred,numofPredicates,executed_pred);
+//  printf("num of join pred is %d because numofPredicates is %d and executed_pred is %d||",num_of_join_pred,numofPredicates,executed_pred);
   order_of_joins = (int*)malloc(sizeof(int)*(num_of_join_pred)); //we have these many joins
   join_table = (int**)malloc(sizeof(int*)*2*num_of_join_pred);
   i=0;
@@ -573,17 +657,16 @@ if (order_of_joins == NULL)
     i++;
   }
   num_of_join_rel = ++j;
-  printf("we have created the following join table with %d rels\n",num_of_join_rel);
-  for (j=0;j<num_of_join_rel;j++)
-  {
-    printf("[%d.%d]\n\n", join_table[j][0],join_table[j][1]);
-  }
+//  printf("we have created the following join table with %d rels\n",num_of_join_rel);
+//  for (j=0;j<num_of_join_rel;j++)
+//  {
+//    printf("[%d.%d]\n\n", join_table[j][0],join_table[j][1]);
+//  }
   order_of_joins = find_permutations (num_of_join_rel, order_of_joins, datatable, input_predicates, numofPredicates, join_table);
 }
-  printf("returning pred %d\n",order_of_joins[*curr_join]);
-  (*curr_join)++;
-  return order_of_joins[*curr_join];
-
+  //printf("returning pred %d\n",order_of_joins[*curr_join]);
+    return order_of_joins[*curr_join++];
+  }
 }
 
 void FreeBatch(batch *b){

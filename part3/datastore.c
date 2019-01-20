@@ -2,6 +2,7 @@
 #include <string.h>
 #include "predicates.h"
 #include "inbetween.h"
+#include "thpool.h"
 #include <unistd.h>
 #include <ctype.h>
 
@@ -27,28 +28,41 @@ relation_data **find_corresponding(query *in_query,all_data *datatable){
   return corresponding_table;
 }
 
+
 void compute_operation(char op,int constant,Relation *relation,inbet_list *A){
   /*ektelei ta filtra twn query kai eisagi stin lista A ta kleidia*/
-  int i;
-  if (op == '='){
-    for (i=0;i<relation->num_tuples;i++){
-      if (relation->tuples[i].payload == constant){
-        InsertInbetList (A, relation->tuples[i].key);
-      }
+  threadpool *thpool = THP_Init(N_THREADS);
+  Filter_arg filter_args[N_THREADS];
+  int merge = relation->num_tuples / N_THREADS;
+  int start=0;
+  for(int i=0;i<N_THREADS;i++){
+    filter_args[i].constant=constant;
+    filter_args[i].op=op;
+    filter_args[i].relation = relation;
+    filter_args[i].start = start;
+    if(i==N_THREADS-1){
+      filter_args[i].end = relation->num_tuples;
+    }else{
+      filter_args[i].end = start+merge;
     }
-  }else if (op == '>'){
-    for (i=0;i<relation->num_tuples;i++){
-      if (relation->tuples[i].payload > constant){
-        InsertInbetList(A, relation->tuples[i].key);
-      }
-    }
-  }else if (op =='<'){
-    for (i=0;i<relation->num_tuples;i++){
-      if (relation->tuples[i].payload < constant){
-        InsertInbetList (A, relation->tuples[i].key);
-      }
-    }
+    start+=merge;
+
   }
+  for(int i=0;i<N_THREADS;i++){
+    THP_AddJob(thpool,(void *)FilterJob,&filter_args[i]);
+  }
+  THP_Barrier(thpool);
+  for(int i=0;i<N_THREADS;i++){
+    if(A->total_tuples==0){
+      A->head = filter_args[i].result->head;
+      A->current = filter_args[i].result->current;
+    }else{
+      A->current->next = filter_args[i].result->head;
+      A->current = filter_args[i].result->current;
+    }
+    A->total_tuples += filter_args[i].result->total_tuples;
+  }
+  THP_Destroy(thpool);
 }
 
 

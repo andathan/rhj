@@ -32,13 +32,6 @@ struct inbetween_results{
 
 typedef struct inbetween_results inbetween_results;
 
-typedef struct {
-  inbetween_results **inb_results;
-  int num_results;
-  int num_lists;
-  int *active;
-}inbetween_table;
-
 inbet_node *InitInbetNode();
 inbet_list *InitInbetList();
 inbetween_results *InitInbetResults(int n);

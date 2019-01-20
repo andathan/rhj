@@ -93,53 +93,34 @@ void JoinJob(Join_args *arg){
   free(hashtable);
   free(chain);
 }
+int start;
+int end;
+int constant;
+char op;
+inbet_list *results;
 
-void IndexAndResult(int index_tuples,int comp_tuples,int index_Psum,int comp_Psum,Relation *indexRel,Relation *compRel,inbet_list *res1,inbet_list *res2){
-  int j,k,rowID,hash_key,new,previoys,payload1,payload2,range_hashfunction,previous;
-  int *chain=NULL , *hashtable=NULL ;
-  uint64_t key1,key2;
-  if(index_tuples==0) return ;
-  int results_c=0;
-  range_hashfunction=getnextodd(index_tuples);
-
-  chain = (int *)malloc(sizeof(int)*index_tuples);
-  for(k=0;k<index_tuples;k++){
-    chain[k] = -1;
-  }
-
-  hashtable = (int *)malloc(sizeof(int)*range_hashfunction);
-  for (k=0;k<range_hashfunction;k++)
-    hashtable[k]=-1;
-
-  /*for every tuple in bucket*/
-  for (j=0;j<index_tuples;j++){
-    hash_key = H2(indexRel->tuples[index_Psum+j].payload) % range_hashfunction;
-    previous = hashtable[hash_key];
-    new = j; //pairnw to kainourgio klidi
-    hashtable[hash_key] = new;
-    if (previous!=-1)
-      chain[new] = previous;
-  }
-  for(j=0;j<comp_tuples;j++){
-    hash_key= H2(compRel->tuples[comp_Psum+j].payload) % range_hashfunction;
-    rowID = hashtable[hash_key];
-    while (rowID!=-1){
-      payload1 = indexRel->tuples[index_Psum+rowID].payload;
-      payload2 = compRel->tuples[comp_Psum+j].payload;
-      if (payload1==payload2){
-        key1=(int)indexRel->tuples[index_Psum+rowID].key;
-        key2=(int)compRel->tuples[comp_Psum+j].key;
-        InsertInbetList(res1,(int)key1);
-        InsertInbetList(res2,(int)key2);
-        results_c++;
+void FilterJob(Filter_arg *arg){
+  arg->result = InitInbetList();
+  if(arg->op=='='){
+    for(int i=arg->start;i<arg->end;i++){
+      if(arg->relation->tuples[i].payload==arg->constant){
+        InsertInbetList(arg->result,arg->relation->tuples[i].key);
       }
-      rowID = chain[rowID];//pairnw tin proigoumeni eggrafi meso tou chain
+    }
+  }else if(arg->op=='<'){
+    for(int i=arg->start;i<arg->end;i++){
+      if(arg->relation->tuples[i].payload<arg->constant){
+        InsertInbetList(arg->result,arg->relation->tuples[i].key);
+      }
+    }
+  }else if(arg->op=='>'){
+    for(int i=arg->start;i<arg->end;i++){
+      if(arg->relation->tuples[i].payload>arg->constant){
+        InsertInbetList(arg->result,arg->relation->tuples[i].key);
+      }
     }
   }
-  free(hashtable);
-  free(chain);
 }
-
 
 void RadixHashJoin(Relation *relR, Relation *relS,inbet_list *res1,inbet_list *res2){
   threadpool *thpool = THP_Init(N_THREADS);

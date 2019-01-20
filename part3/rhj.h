@@ -92,6 +92,14 @@ typedef struct Join_args{
   int flag;
 }Join_args;
 
+typedef struct Filter_arg{
+  int start;
+  int end;
+  int constant;
+  char op;
+  inbet_list *result;
+  Relation *relation;
+}Filter_arg;
 
 /*body of functions in rhj.c*/
 
@@ -117,5 +125,5 @@ relation_data **find_corresponding(query *,all_data *datatable);
 void compute_operation(char op, int constant,Relation * relation,inbet_list * A);
 void show_results(inbetween_results *inb_results,relation_data **input_data, char * token);
 relation_data *parsefile(char * filename);
-
+void FilterJob(Filter_arg *arg);
 #endif

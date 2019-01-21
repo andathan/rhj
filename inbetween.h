@@ -22,6 +22,7 @@ struct inbet_list{
 
 typedef struct inbet_list inbet_list;
 
+
 struct inbetween_results{
   int **inbetween;          /*array of pointers to lists*/
   int *joined;

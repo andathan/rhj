@@ -3,6 +3,8 @@
 #include "predicates.h"
 #include <string.h>
 #include <math.h>
+
+
 int main (void)
 {
   char *tokens[3];
@@ -17,17 +19,17 @@ int main (void)
 //  datatable->table = (relation_data **)malloc(sizeof(relation_data *));
 
   getline(&filename,&linesize,stdin);
-  while(strcmp(filename,"done\n")!= 0){
+
+  while(strcmp(filename,"Done\n")!= 0){
     datatable->table = realloc(datatable->table,sizeof(relation_data *)*(datatable->num_relations+1));
     filename[strlen(filename)-1]='\0';
     datatable->table[datatable->num_relations] = parsefile(filename);
     datatable->num_relations++;
     getline(&filename,&linesize,stdin);
   }
-
-
-  getline(&filename,&linesize,stdin);
-  while(strcmp(filename,"\n")!=0){
+  size_t b;
+  b=getline(&filename,&linesize,stdin);
+  while(b!=0){
     //new query batch
     input_batch = InitBatch();
     while(strcmp(filename,"F\n")!=0){ //read and store queries in batch
@@ -35,11 +37,11 @@ int main (void)
       AddToBatch(input_batch,tokens);
       getline(&filename,&linesize,stdin);
     }
+
     for(int k=0;k<input_batch->num_of_queries;k++){
       execute_query(input_batch->queries_table[k],datatable);
     }
     FreeBatch(input_batch);
-    printf("============================\n End of Batch\n =======================\n");
-    getline(&filename,&linesize,stdin);
+    b=getline(&filename,&linesize,stdin);
   }
 }

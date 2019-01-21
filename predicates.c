@@ -61,7 +61,7 @@ float update_statistics(relation_data ** relations, predicates ** predicate, int
   if (curr_pred->rel2!=-1)
     {
     second_r2data = relations[curr_pred->rel2];
-//    printf("\nPaw na tou zitiso ths rel %d to col %d\n",curr_pred->rel2,curr_pred->col2);
+  //  printf("\nPaw na tou zitiso ths rel %d to col %d\n",curr_pred->rel2,curr_pred->col2);
 //    printf("d is %f\n",second_r2data->columns[curr_pred->col2]->d);
     }
   else
@@ -201,9 +201,8 @@ float update_statistics(relation_data ** relations, predicates ** predicate, int
       r2data->columns[i]->f = r2data->columns[curr_column]->f;
     }
   }
-  else //join metaksi 2 pinakon
+  else if (curr_pred->rel2!=-1)//join metaksi 2 pinakon
   {
-
     //for table B
     for (k=0;k<second_r2data->numColumns;k++)
     {
@@ -304,7 +303,8 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
     if(inb_res->joined[pred->rel2]==-1){
       relation = rel2;
     }else{
-      relation = BuildRelation(inb_res,pred->rel2,rel2);
+
+      relation = BuildRelation(inb_res->inbetween[pred->rel2],inb_res->joined[pred->rel2],pred->rel2,rel2);
     }
     result2 = InitInbetList();
     compute_operation(pred->op,pred->col1,relation,result2);
@@ -314,7 +314,7 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
     if(inb_res->joined[pred->rel1]==-1){
       relation = rel1;
     }else{
-      relation = BuildRelation(inb_res,pred->rel1,rel1);
+      relation = BuildRelation(inb_res->inbetween[pred->rel1],inb_res->joined[pred->rel1],pred->rel1,rel1);
     }
     result1 = InitInbetList();
     compute_operation(pred->op,pred->col2,relation,result1);
@@ -337,10 +337,10 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
     rel1 = relations[pred->rel1]->columns[pred->col1];
     rel2 = relations[pred->rel2]->columns[pred->col2];
     if(inb_res->joined[pred->rel2]!=-1){
-      rel2 = BuildRelation(inb_res,pred->rel2,rel2);
+      rel2 = BuildRelation(inb_res->inbetween[pred->rel2],inb_res->joined[pred->rel2],pred->rel2,rel2);
     }
     if(inb_res->joined[pred->rel1]!=-1){
-      rel1 = BuildRelation(inb_res,pred->rel1,rel1);
+      rel1 = BuildRelation(inb_res->inbetween[pred->rel1],inb_res->joined[pred->rel1],pred->rel1,rel1);
     }
     result1 = InitInbetList();
     result2 = InitInbetList();
@@ -361,6 +361,7 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
 
 
 void execute_query(query *in_query,all_data *data){
+
   relation_data **relations = find_corresponding(in_query,data);
   int * order_of_joins = NULL;
   int * order_of_filters = NULL;
@@ -384,9 +385,9 @@ void execute_query(query *in_query,all_data *data){
   if (in_query->katigorimata[k]->rel2!=-1)
     restore_statistics(relations, in_query->katigorimata[k]->rel2);
   }
-  printf("-------------------\n");
+//  printf("-------------------\n");
   show_results(inb_res,relations,in_query->proboles);
-  printf("\n-------------------\n");
+//  printf("\n-------------------\n");
   //free inb_res , relations
   free (curr_join);
   free (order_of_joins);
@@ -533,6 +534,7 @@ int select_predicate(int * curr_join, int * curr_filter, int numofPredicates, pr
   int num_of_join_rel,min,pos;
   int i,j,return_predicate=-1,weight,constant,distance_to_filter=0,rel,col,max,k;
   int ** filter_cost_table;
+  char create_joins_table=1;
   int ** join_table;
   char filters_remaining=0;
   int executed_pred=0;
@@ -571,7 +573,7 @@ int select_predicate(int * curr_join, int * curr_filter, int numofPredicates, pr
         {
           if (input_predicates[k]->op!='.' && input_predicates[k]->rel2==-1)
           {
-            restore_statistics (datatable, input_predicates[k]->rel1); 
+            restore_statistics (datatable, input_predicates[k]->rel1);
           }
         }
     for (int j=0; j<num_of_filter_pred;j++)
@@ -613,8 +615,17 @@ int select_predicate(int * curr_join, int * curr_filter, int numofPredicates, pr
     {
 //printf("Telos me ta filtra. Pame sta joinakia mas\n");
 //meta ta join
-if (order_of_joins == NULL)
+for (j=0;j<numofPredicates;j++)
+  {
+    if (input_predicates[j]->op=='.' && input_predicates[j]->rel2!=-1)
+    {
+      create_joins_table = 0;
+      break;
+    }
+  }
+if (create_joins_table == 1)
 {
+  printf("Creating joins!\n");
   for (int j=0;j<numofPredicates;j++)
   {
      if (input_predicates[j]->op=='.')
@@ -632,13 +643,14 @@ if (order_of_joins == NULL)
     }
   }
 //  printf("num of join pred is %d because numofPredicates is %d and executed_pred is %d||",num_of_join_pred,numofPredicates,executed_pred);
-  order_of_joins = (int*)malloc(sizeof(int)*(num_of_join_pred)); //we have these many joins
+  order_of_joins = (int*)malloc(sizeof(int)*(num_of_join_pred+1)); //we have these many joins
   join_table = (int**)malloc(sizeof(int*)*2*num_of_join_pred);
   i=0;
   j=-1;
   while (i<numofPredicates)
   {
 //    printf("\nTore blepoume to predicate %d.%d = %d.%d\n",input_predicates[i]->rel1,input_predicates[i]->col1,input_predicates[i]->rel2,input_predicates[i]->col2);
+
     if ((input_predicates[i]->op!='=') || (input_predicates[i]->rel2==-1))
       {
         i++;
@@ -662,7 +674,11 @@ if (order_of_joins == NULL)
 //  {
 //    printf("[%d.%d]\n\n", join_table[j][0],join_table[j][1]);
 //  }
-  order_of_joins = find_permutations (num_of_join_rel, order_of_joins, datatable, input_predicates, numofPredicates, join_table);
+  order_of_joins = find_permutations (num_of_join_rel, order_of_joins, datatable, input_predicates, numofPredicates, join_table, res);
+  for (i=0;i<num_of_join_pred;i++)
+    {
+      printf("Pred number %d|\n", order_of_joins[i]);
+    }
 }
   //printf("returning pred %d\n",order_of_joins[*curr_join]);
     return order_of_joins[*curr_join++];

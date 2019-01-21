@@ -25,7 +25,7 @@ int find_pred_num(predicates ** predicate ,int num_predicates,int r1, int c1, in
 }
 
 tree * new(relation_data ** relations, int r1, int c1, int r2, int c2,predicates ** predicate, int pred_num){
-
+// /  printf("New called\n");
   tree * leaf1 = (tree*)malloc(sizeof(tree));
   leaf1->rel = r1;
   leaf1->col = c1;
@@ -50,6 +50,7 @@ tree * new(relation_data ** relations, int r1, int c1, int r2, int c2,predicates
 }
 tree * insert ( relation_data ** relations, tree * root, int r, int c, predicates ** predicate, int pred_num)
 {
+//  printf("insert called\n");
   if (root->l->pred_num==pred_num)
     {
       return root;
@@ -132,6 +133,7 @@ int execute (tree * root, predicates ** predicate, int numofPredicates)
     printf("view_leaf is NULl! Possible Errors!\n");
   if (view_leaf->l==NULL)//last call
   {
+    printf("Last call!\n");
   pred_num_to_return = view_leaf->pred_num;
   if (view_leaf->l!=NULL)
     free(view_leaf->l);
@@ -140,8 +142,8 @@ int execute (tree * root, predicates ** predicate, int numofPredicates)
   return -1;
   }
 else
-{
-  while((trans_leaf->l!=NULL || trans_leaf->r!=NULL) && trans_leaf!=NULL)
+  {
+  while((trans_leaf->r!=NULL) && trans_leaf!=NULL)
   {
     view_leaf = trans_leaf;
     trans_leaf = trans_leaf->l;
@@ -154,59 +156,59 @@ else
           break;
       }
     if (grand_dad!=NULL)
-    {
-    if (view_leaf->l!=NULL)
-      free (view_leaf->l);
-    free (view_leaf->r);
-    free(view_leaf);
-    grand_dad->l=NULL;
-    grand_dad->r=NULL;
-  }
+      {
+      if (view_leaf->l!=NULL)
+        free (view_leaf->l);
+      free (view_leaf->r);
+      free(view_leaf);
+      grand_dad->l=NULL;
+      grand_dad->r=NULL;
+    }
   }
   return pred_num_to_return;
 }
 
 
-int connected(predicates ** predicate, int num_predicates, int rel1, int col1, int rel2, int col2)
+int connected(predicates ** predicate, int num_predicates, int rel1, int col1, int rel2, int col2, inbetween_results *res)
 {
   int i;
 //  printf("we are trying to find %d.%d = %d.%d|",rel1,col1,rel2,col2);
   for (i=0;i<num_predicates;i++)
   {
   // printf("[Now checking predicate %d.%d %c %d.%d]\n",predicate[i]->rel1,predicate[i]->col1,predicate[i]->op, predicate[i]->rel2,predicate[i]->col2);
-    if ((predicate[i]->rel1 == rel1) && (predicate[i]->col1==col1) && (predicate[i]->op=='=') && (predicate[i]->rel2 == rel2) && (predicate[i]->col2==col2)
-    || (predicate[i]->rel1 == rel2) && (predicate[i]->col1==col2) && (predicate[i]->op=='=') && (predicate[i]->rel2 == rel1) && (predicate[i]->col2==col1))//h anapoda
+    if ((((predicate[i]->rel1 == rel1) && (predicate[i]->col1==col1) && (predicate[i]->op=='=') && (predicate[i]->rel2 == rel2) && (predicate[i]->col2==col2))
+    || ((predicate[i]->rel1 == rel2) && (predicate[i]->col1==col2) && (predicate[i]->op=='=') && (predicate[i]->rel2 == rel1) && (predicate[i]->col2==col1)))//h anapoda
+    && ((res->joined[predicate[i]->rel1] != -1)
+    || (res->joined[predicate[i]->rel2] != -1)))
       {
-  //    printf("connected\n");
+//     printf("Rel 1 is %d and Rel is %d\n\n",res->joined[predicate[i]->rel1],res->joined[predicate[i]->rel2]);
         return 1;
       }
   }
+//  printf("No connect\n");
   return 0;
 }
-void permutation_to_trees(exec_information ** store_information, int * store_info_counter, relation_data ** relations, predicates ** predicate, int num_predicates, int ** arr, int size)
+int permutation_to_trees(exec_information ** store_information, int * store_info_counter, relation_data ** relations, predicates ** predicate, int num_predicates, int ** arr, int size, inbetween_results *res)
 {
     int i,j, pred_num;
     char flag=1;
-//    for(i=0; i<size; i++)
-//    {
-//       printf("{%d.%d}\t",arr[i][0], arr[i][1]);
-//    }
-//    printf("\n\n");
     for(i=0; i<size; i=i+2)
     {
         if (i!=size-1)
-        if (connected(predicate, num_predicates,arr[i][0], arr[i][1], arr[i+1][0], arr[i+1][1])==0)
+        if (connected(predicate, num_predicates,arr[i][0], arr[i][1], arr[i+1][0], arr[i+1][1],res)==0)
           {
             flag=0;
-            return;
           }
     }
-
+    if (flag==0)
+      {
+  //      printf("We found no connected!\n\n");
+      return -1;
+      }
 //edw tha dimourgisei to tree based on pinaka arr
     tree * cost_tree = malloc(sizeof(tree));
     pred_num = find_pred_num(predicate,num_predicates, arr[0][0], arr[0][1], arr[1][0], arr[1][1],'=');
     cost_tree = new(relations, arr[0][0], arr[0][1], arr[1][0], arr[1][1],predicate, pred_num);
-
     for(i=2; i<size-1; i=i+2)
     {
       pred_num = find_pred_num(predicate,num_predicates,arr[i][0], arr[i][1], arr[i+1][0], arr[i+1][1],'=');
@@ -227,24 +229,39 @@ void swap(int ** arr, int a, int b)
     arr[b][1] = col_temp;
 }
 //permutation function
-void permutation(exec_information ** store_information, int * store_info_counter, relation_data ** relations,predicates ** predicate, int num_predicates, int ** arr, int start, int end)
+int permutation(exec_information ** store_information, int * store_info_counter, relation_data ** relations,predicates ** predicate, int num_predicates, int ** arr, int start, int end, inbetween_results *res)
 {
     int i;
     if(start==end)
     {
-        permutation_to_trees(store_information,store_info_counter, relations, predicate, num_predicates, arr, end+1);
-        return;
+        if (permutation_to_trees(store_information,store_info_counter, relations, predicate, num_predicates, arr, end+1,res)==-1)
+          {
+            return -1;
+          }
     }
     for(i=start;i<=end;i++)
     {
         swap(arr, i,start);
-        permutation(store_information, store_info_counter, relations, predicate,num_predicates,arr, start+1, end);
+        if (permutation(store_information, store_info_counter, relations, predicate,num_predicates,arr, start+1, end,res)==-1)
+          return -1;
         swap(arr, i, start);
     }
 }
-int  * find_permutations (int num_of_join_pred, int * order_of_joins, relation_data ** relations, predicates ** predicate, int num_predicates, int ** join_table)
+int already_exists (int * order_of_joins,int i,predicates ** predicate)
 {
-  int i;
+  int j;
+  int pred_num;
+  for (j=0;j<i;j++)
+  {
+    pred_num = order_of_joins[j];
+    if (predicate[pred_num]->rel1 == pred_num || predicate[pred_num]->rel2==pred_num)
+      return 1;
+  }
+  return 0;
+}
+int  * find_permutations (int num_of_join_pred, int * order_of_joins, relation_data ** relations, predicates ** predicate, int num_predicates, int ** join_table, inbetween_results *res)
+{
+  int i,j;
   int x;
   int next_pred;
   char finish=0;
@@ -263,8 +280,28 @@ int  * find_permutations (int num_of_join_pred, int * order_of_joins, relation_d
     }
     int * store_info_counter=malloc(sizeof(int));
     *store_info_counter=0;
-    permutation(store_information, store_info_counter, relations, predicate,  num_predicates, join_table, 0, num_of_join_pred-1);
+    if (permutation(store_information, store_info_counter, relations, predicate,  num_predicates, join_table, 0, num_of_join_pred-1,res)==-1)
+    {
+      i=0;
+        for (j=0;j<num_predicates;j++)
+        {
+          if ((res->joined[predicate[j]->rel1] != -1) || (res->joined[predicate[j]->rel2] != -1) || already_exists(order_of_joins,i,predicate)==1)
+            {
+              order_of_joins[i] = j;
+              i++;
+              if (i==num_of_join_pred)
+                break;//done
+            }
+        }
+        for (i=0;i++;i<x)
+          {
+            free (store_information[i]->exec_tree);
+           free (store_information[i]);
+          }
+      return order_of_joins;
+    }
     int selected_tree = find_min_cost(store_information,*store_info_counter);
+
       for (i=0;i<num_of_join_pred/2;i++)
       {
           next_pred = execute (store_information[selected_tree]->exec_tree, predicate, num_predicates);
@@ -278,7 +315,8 @@ int  * find_permutations (int num_of_join_pred, int * order_of_joins, relation_d
            }
   }
     for (i=0;i++;i<x)
-      {free (store_information[i]->exec_tree);
+      {
+        free (store_information[i]->exec_tree);
        free (store_information[i]);
       }
     return order_of_joins;

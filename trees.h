@@ -17,17 +17,17 @@ struct exec_information{
 };
 typedef struct exec_information exec_information;
 
-
+int already_exists (int * order_of_joins,int i,predicates ** predicate);
 int find_pred_num(predicates ** predicate ,int num_predicates,int r1, int c1, int r2, int c2, char op);
 tree * new(relation_data ** relations, int r1, int r2, int c1, int c2, predicates **,  int);
 tree * insert(relation_data ** relations, tree * root, int r, int c, predicates **, int );
 void restore_data(tree * root, relation_data ** relations);
 int calculate_total_cost(tree * root);
 int execute (tree * root, predicates **, int);
-int connected(predicates ** predicates, int num_predicates, int rel1, int col1, int rel2, int col2);
-void permutation_to_trees(exec_information ** store_information, int * store_info_counter, relation_data ** relations, predicates ** predicates, int num_predicates, int ** arr, int size);
+int connected(predicates ** predicates, int num_predicates, int rel1, int col1, int rel2, int col2,inbetween_results *res);
+int permutation_to_trees(exec_information ** store_information, int * store_info_counter, relation_data ** relations, predicates ** predicates, int num_predicates, int ** arr, int size,inbetween_results *res);
 void swap(int ** arr, int a, int b);
-void permutation(exec_information ** store_information, int * store_info_counter, relation_data ** relations,predicates ** predicates, int num_predicates, int ** arr, int start, int end);
-int * find_permutations (int, int *, relation_data ** relations, predicates ** predicates, int num_predicates, int ** join_table);
+int permutation(exec_information ** store_information, int * store_info_counter, relation_data ** relations,predicates ** predicates, int num_predicates, int ** arr, int start, int end,inbetween_results *res);
+int * find_permutations (int, int *, relation_data ** relations, predicates ** predicates, int num_predicates, int ** join_table, inbetween_results *res);
 int find_min_cost (exec_information ** store_information, int store_info_counter);
 #endif

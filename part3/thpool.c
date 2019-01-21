@@ -33,7 +33,7 @@ threadpool *THP_Init(int n_threads){
     thpool->threads_id[i] = pthread_create(thpool->threads[i], NULL, (void *)ThreadJob, thpool);
   }
   pthread_mutex_lock(&thpool->alive_mtx);
-  while (thpool->threads_alive != n_threads){
+  while (thpool->threads_alive != n_threads){		//wait until all threads are initialized
     pthread_cond_wait(&thpool->alive_cond,&thpool->alive_mtx);
   }
   pthread_mutex_unlock(&thpool->alive_mtx);
@@ -56,7 +56,7 @@ void THP_AddJob(threadpool *thp,void (*function)(void* arg),void *arg){
     jq->last = newjob;
   }
   thp->queue->n_jobs++;
-  pthread_cond_signal(&thp->empty_queue);
+  pthread_cond_signal(&thp->empty_queue);		//signal to thread waiting for empty_queue condition , there are jobs now
   pthread_mutex_unlock(&thp->mtx_queue) ;
   //unlock mutex
 }
@@ -92,10 +92,10 @@ void ThreadJob(threadpool *thpool){
 	void *arg;
   pthread_mutex_lock(&thpool->alive_mtx);
 	thpool->threads_alive += 1;
-  pthread_cond_signal(&thpool->alive_cond);
+  pthread_cond_signal(&thpool->alive_cond);		//signal to condition waiting for all threads to be initialized
   pthread_mutex_unlock(&thpool->alive_mtx);
   while(1){
-    job *my_job = GetJob(thpool);
+    job *my_job = GetJob(thpool);	
     pthread_mutex_lock(&thpool->barrier_mtx);
   	thpool->threads_working++;
     pthread_mutex_unlock(&thpool->barrier_mtx);
@@ -106,7 +106,7 @@ void ThreadJob(threadpool *thpool){
   	thpool->threads_working--;
     thpool->jobsdone++;
     if(thpool->threads_working==0)
-      pthread_cond_signal(&thpool->barrier_cond);
+      pthread_cond_signal(&thpool->barrier_cond);		//signal that i am done to barrier
     pthread_mutex_unlock(&thpool->barrier_mtx);
   }
 }
@@ -114,7 +114,7 @@ void ThreadJob(threadpool *thpool){
 
 void THP_Barrier(threadpool *thp){
   pthread_mutex_lock(&thp->barrier_mtx);
-  while(thp->jobsdone!=thp->jobs2bedone || thp->threads_working!=0){
+  while(thp->jobsdone!=thp->jobs2bedone || thp->threads_working!=0){	//wait for all jobs to be done , and all threads to finish working
     pthread_cond_wait(&thp->barrier_cond,&thp->barrier_mtx);
   }
   thp->jobs2bedone=0;
@@ -123,6 +123,7 @@ void THP_Barrier(threadpool *thp){
 }
 
 void THP_Destroy(threadpool *thp){
+/*Threadpool is destroyed by adding to queue pthread_exit , then we pthread_join for every thread and we destroy mutexes and conditions*/
   void *ret;
   for(int i=0;i<N_THREADS;i++){
     THP_AddJob(thp,(void*)pthread_exit,NULL);

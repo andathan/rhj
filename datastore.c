@@ -178,8 +178,8 @@ relation_data *parsefile(char * filename){
          if (r2data->columns[i]->d_table[x]==1)
           (r2data->columns[i]->d)++;
        }
-//       printf("\n---------\nColumn %d Statistics:\n",i);
-//       printf("Low: %ju | Upper %ju | Num Values %f | Distinct Values %f\n---------\n",r2data->columns[i]->l,r2data->columns[i]->u,r2data->columns[i]->f,r2data->columns[i]->d);
+      printf("\n---------\n$Column %d Statistics:\n",i);
+      printf("Low: %ju | Upper %ju | Num Values %f | Distinct Values %f\n---------\n",r2data->columns[i]->l,r2data->columns[i]->u,r2data->columns[i]->f,r2data->columns[i]->d);
 
   }
   return r2data;

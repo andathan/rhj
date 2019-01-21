@@ -247,19 +247,19 @@ int permutation(exec_information ** store_information, int * store_info_counter,
         swap(arr, i, start);
     }
 }
-int already_exists (int * order_of_joins,int i,predicates ** predicate)
+int already_exists (int ** order_of_joins,int i,predicates ** predicate)
 {
   int j;
   int pred_num;
   for (j=0;j<i;j++)
   {
-    pred_num = order_of_joins[j];
+    pred_num = *order_of_joins[j];
     if (predicate[pred_num]->rel1 == pred_num || predicate[pred_num]->rel2==pred_num)
       return 1;
   }
   return 0;
 }
-int  * find_permutations (int num_of_join_pred, int * order_of_joins, relation_data ** relations, predicates ** predicate, int num_predicates, int ** join_table, inbetween_results *res)
+int  * find_permutations (int num_of_join_pred, int ** order_of_joins, relation_data ** relations, predicates ** predicate, int num_predicates, int ** join_table, inbetween_results *res)
 {
   int i,j;
   int x;
@@ -287,18 +287,18 @@ int  * find_permutations (int num_of_join_pred, int * order_of_joins, relation_d
         {
           if ((res->joined[predicate[j]->rel1] != -1) || (res->joined[predicate[j]->rel2] != -1) || already_exists(order_of_joins,i,predicate)==1)
             {
-              order_of_joins[i] = j;
+              *order_of_joins[i] = j;
               i++;
-              if (i==num_of_join_pred)
+              if (i==num_of_join_pred/2)
                 break;//done
             }
         }
         for (i=0;i++;i<x)
           {
-            free (store_information[i]->exec_tree);
+           free (store_information[i]->exec_tree);
            free (store_information[i]);
           }
-      return order_of_joins;
+      return NULL;
     }
     int selected_tree = find_min_cost(store_information,*store_info_counter);
 
@@ -307,7 +307,7 @@ int  * find_permutations (int num_of_join_pred, int * order_of_joins, relation_d
           next_pred = execute (store_information[selected_tree]->exec_tree, predicate, num_predicates);
            if (next_pred!=-1)
            {
-           order_of_joins[i] = next_pred;
+           *order_of_joins[i] = next_pred;
             }
            else
            {
@@ -319,7 +319,7 @@ int  * find_permutations (int num_of_join_pred, int * order_of_joins, relation_d
         free (store_information[i]->exec_tree);
        free (store_information[i]);
       }
-    return order_of_joins;
+    return NULL;
 }
 
 int find_min_cost (exec_information ** store_information, int store_info_counter)

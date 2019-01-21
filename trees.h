@@ -17,7 +17,7 @@ struct exec_information{
 };
 typedef struct exec_information exec_information;
 
-int already_exists (int * order_of_joins,int i,predicates ** predicate);
+int already_exists (int ** order_of_joins,int i,predicates ** predicate);
 int find_pred_num(predicates ** predicate ,int num_predicates,int r1, int c1, int r2, int c2, char op);
 tree * new(relation_data ** relations, int r1, int r2, int c1, int c2, predicates **,  int);
 tree * insert(relation_data ** relations, tree * root, int r, int c, predicates **, int );
@@ -28,6 +28,6 @@ int connected(predicates ** predicates, int num_predicates, int rel1, int col1, 
 int permutation_to_trees(exec_information ** store_information, int * store_info_counter, relation_data ** relations, predicates ** predicates, int num_predicates, int ** arr, int size,inbetween_results *res);
 void swap(int ** arr, int a, int b);
 int permutation(exec_information ** store_information, int * store_info_counter, relation_data ** relations,predicates ** predicates, int num_predicates, int ** arr, int start, int end,inbetween_results *res);
-int * find_permutations (int, int *, relation_data ** relations, predicates ** predicates, int num_predicates, int ** join_table, inbetween_results *res);
+int * find_permutations (int, int **, relation_data ** relations, predicates ** predicates, int num_predicates, int ** join_table, inbetween_results *res);
 int find_min_cost (exec_information ** store_information, int store_info_counter);
 #endif

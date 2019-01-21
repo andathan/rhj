@@ -53,6 +53,7 @@ void compute_operation(char op,int constant,Relation *relation,inbet_list *A){
   }
   THP_Barrier(thpool);
   for(int i=0;i<N_THREADS;i++){
+    if(filter_args[i].result->total_tuples==0) continue;
     if(A->total_tuples==0){
       A->head = filter_args[i].result->head;
       A->current = filter_args[i].result->current;

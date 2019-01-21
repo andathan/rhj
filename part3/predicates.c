@@ -369,12 +369,22 @@ void execute_query(query *in_query,all_data *data){
   int * curr_filter = (int*)malloc(sizeof(int));
   *curr_join=0;
   *curr_filter=0;
-  int next_pred=-1;
+  int next_pred=-1,flag=0;
   inbetween_results *inb_res=InitInbetResults(in_query->num_of_relations);
   for(int i=0;i<in_query->num_of_predicates;i++){
-    next_pred = select_predicate(curr_join,curr_filter, in_query->num_of_predicates,in_query->katigorimata,relations,inb_res,order_of_joins,order_of_filters);
-    //printf("Next pred is %d\n",next_pred);
+    //if(flag==0){
+      next_pred = select_predicate(curr_join,curr_filter, in_query->num_of_predicates,in_query->katigorimata,relations,inb_res,order_of_joins,order_of_filters);
+    //}
   //  printf("Now updating statistics of pred %d dld to pred %d.%d %c %d.%d...\n",next_pred,in_query->katigorimata[next_pred]->rel1,in_query->katigorimata[next_pred]->col1,in_query->katigorimata[next_pred]->op,in_query->katigorimata[next_pred]->rel2,in_query->katigorimata[next_pred]->col2);
+    if(/*flag == 1 ||*/ i>0 && (inb_res->joined[in_query->katigorimata[next_pred]->rel1]==-1&& inb_res->joined[in_query->katigorimata[next_pred]->rel2]==-1)){
+      flag = 1;
+      for(int j=0;j<in_query->num_of_predicates;j++){
+        if((inb_res->joined[in_query->katigorimata[j]->rel1]!=-1 ||inb_res->joined[in_query->katigorimata[j]->rel2]!=-1 ) && in_query->katigorimata[j]->op!= '.'){
+          next_pred =j;
+          break;
+        }
+      }
+    }
     update_statistics(relations,in_query->katigorimata,next_pred);
     inb_res = execute_predicate(in_query->katigorimata[next_pred],relations,inb_res);
     in_query->katigorimata[next_pred]->op= '.';

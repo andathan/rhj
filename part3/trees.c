@@ -279,6 +279,7 @@ int  * find_permutations (int num_of_join_pred, int * order_of_joins, relation_d
     }
     for (i=0;i<x;i++)
       {
+        free(store_information[i]->exec_tree);
        free (store_information[i]);
     }
     free(store_info_counter);

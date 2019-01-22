@@ -133,10 +133,10 @@ int execute (tree * root, predicates ** predicate, int numofPredicates)
   if (view_leaf->l==NULL)//last call
   {
   pred_num_to_return = view_leaf->pred_num;
-  free(view_leaf->l);
+      if (view_leaf->l!=NULL)
+         free(view_leaf->l);
   free(view_leaf->r);
-   if (view_leaf!=NULL)
-    free(view_leaf);
+  free(view_leaf);
   return -1;
   }
 else

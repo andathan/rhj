@@ -28,8 +28,32 @@ relation_data **find_corresponding(query *in_query,all_data *datatable){
   return corresponding_table;
 }
 
-
 void compute_operation(char op,int constant,Relation *relation,inbet_list *A){
+  /*ektelei ta filtra twn query kai eisagi stin lista A ta kleidia*/
+  int i;
+  if (op == '='){
+    for (i=0;i<relation->num_tuples;i++){
+      if (relation->tuples[i].payload == constant){
+        InsertInbetList (A, relation->tuples[i].key);
+      }
+    }
+  }else if (op == '>'){
+    for (i=0;i<relation->num_tuples;i++){
+      if (relation->tuples[i].payload > constant){
+        InsertInbetList(A, relation->tuples[i].key);
+      }
+    }
+  }else if (op =='<'){
+    for (i=0;i<relation->num_tuples;i++){
+      if (relation->tuples[i].payload < constant){
+        InsertInbetList (A, relation->tuples[i].key);
+      }
+    }
+  }
+}
+
+
+void compute_operation2(char op,int constant,Relation *relation,inbet_list *A){
   /*ektelei ta filtra twn query kai eisagi stin lista A ta kleidia*/
   threadpool *thpool = THP_Init(N_THREADS);
   Filter_arg filter_args[N_THREADS];

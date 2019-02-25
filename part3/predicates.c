@@ -267,6 +267,7 @@ batch *InitBatch(){
   batch *my_batch=malloc(sizeof(batch));
   my_batch->num_of_queries=0;
   my_batch->queries_table=malloc(sizeof(query*));
+  return my_batch;
 }
 
 batch *AddToBatch(batch *my_batch,char **tokens){
@@ -290,7 +291,7 @@ batch *AddToBatch(batch *my_batch,char **tokens){
   my_batch->num_of_queries++;
 }
 
-inbetween_results *execute_predicate(predicates *pred,relation_data **relations,inbetween_results *inb_res){
+inbetween_results *execute_predicate(predicates *pred,relation_data **relations,inbetween_results *inb_res,threadpool *thp){
   Relation *relation,*rel1,*rel2;
   inbet_list *result1,*result2;
   if(pred->rel1==-1)
@@ -303,8 +304,9 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
       relation = BuildRelation(inb_res->inbetween[pred->rel2],inb_res->joined[pred->rel2],pred->rel2,rel2);
     }
     result2 = InitInbetList();
-    compute_operation(pred->op,pred->col1,relation,result2);
+    compute_operation2(pred->op,pred->col1,relation,result2,thp);
     inb_res = UpdateInbetList2(inb_res,result2,pred->rel2);
+    FreeResults(result2);
   }else if(pred->rel2==-1){
     rel1 = relations[pred->rel1]->columns[pred->col1];
     if(inb_res->joined[pred->rel1]==-1){
@@ -313,8 +315,9 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
       relation = BuildRelation(inb_res->inbetween[pred->rel1],inb_res->joined[pred->rel1],pred->rel1,rel1);
     }
     result1 = InitInbetList();
-    compute_operation(pred->op,pred->col2,relation,result1);
+    compute_operation2(pred->op,pred->col2,relation,result1,thp);
     inb_res = UpdateInbetList2(inb_res,result1,pred->rel1);
+    FreeResults(result1);
   }else if(pred->rel1==pred->rel2){ //self join
 /*    rel1 = relations[pred->rel1]->columns[pred->col1];
     if(inb_res->joined[pred->rel1]!=-1){
@@ -344,19 +347,21 @@ inbetween_results *execute_predicate(predicates *pred,relation_data **relations,
       if(inb_res->joined_pairs[pred->rel1][pred->rel2]!=-1){
         SerialCompare(rel1,rel2,result1,result2);
       }else{
-        RadixHashJoin(rel1,rel2,result1,result2);
+        RadixHashJoin(rel1,rel2,result1,result2,thp);
       }
       inb_res=UpdateInbetList(inb_res,result1,result2,pred->rel1,pred->rel2);
     }else{
       //edo prepei na mpoun ta > , < metaksi pinakwn - sinartisi
       printf("%c\n",pred->op );
     }
+    FreeResults(result1);
+    FreeResults(result2);
   }
   return inb_res;
 }
 
 
-void execute_query(query *in_query,all_data *data){
+void execute_query(query *in_query,all_data *data,threadpool *thp){
   relation_data **relations = find_corresponding(in_query,data);
   int * order_of_joins = NULL;
   int * order_of_filters = NULL;
@@ -367,10 +372,8 @@ void execute_query(query *in_query,all_data *data){
   int next_pred=-1,flag=0;
   inbetween_results *inb_res=InitInbetResults(in_query->num_of_relations);
   for(int i=0;i<in_query->num_of_predicates;i++){
-    //if(flag==0){
-      next_pred = select_predicate(curr_join,curr_filter, in_query->num_of_predicates,in_query->katigorimata,relations,inb_res,order_of_joins,order_of_filters);
-    //}
-    if(/*flag == 1 ||*/ i>0 && (inb_res->joined[in_query->katigorimata[next_pred]->rel1]==-1&& inb_res->joined[in_query->katigorimata[next_pred]->rel2]==-1)){
+    next_pred = select_predicate(curr_join,curr_filter, in_query->num_of_predicates,in_query->katigorimata,relations,inb_res,order_of_joins,order_of_filters);
+    if(i>0 && (inb_res->joined[in_query->katigorimata[next_pred]->rel1]==-1&& inb_res->joined[in_query->katigorimata[next_pred]->rel2]==-1)){
       flag = 1;
       for(int j=0;j<in_query->num_of_predicates;j++){
         if((inb_res->joined[in_query->katigorimata[j]->rel1]!=-1 ||inb_res->joined[in_query->katigorimata[j]->rel2]!=-1 ) && in_query->katigorimata[j]->op!= '.'){
@@ -380,23 +383,26 @@ void execute_query(query *in_query,all_data *data){
       }
     }
     update_statistics(relations,in_query->katigorimata,next_pred);
-    inb_res = execute_predicate(in_query->katigorimata[next_pred],relations,inb_res);
+    inb_res = execute_predicate(in_query->katigorimata[next_pred],relations,inb_res,thp);
     in_query->katigorimata[next_pred]->op= '.';
   }
+
+
   for (int k=0;k<in_query->num_of_predicates;k++)
   {
   restore_statistics(relations, in_query->katigorimata[k]->rel1);
   if (in_query->katigorimata[k]->rel2!=-1)
     restore_statistics(relations, in_query->katigorimata[k]->rel2);
   }
-//  printf("-------------------\n");
+
   show_results(inb_res,relations,in_query->proboles);
-//  printf("\n-------------------\n");
-  //free inb_res , relations
+
+  free(relations);
+  FreeInbetList(inb_res);
   free (curr_join);
   free(curr_filter);
- free(order_of_joins);
- free(order_of_filters);
+  free(order_of_joins);
+  free(order_of_filters);
 }
 void seperate_predicate (char * input, char * temp_tokens[3] )
 {

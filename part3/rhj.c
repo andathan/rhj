@@ -122,8 +122,7 @@ void FilterJob(Filter_arg *arg){
   }
 }
 
-void RadixHashJoin(Relation *relR, Relation *relS,inbet_list *res1,inbet_list *res2){
-  threadpool *thpool = THP_Init(N_THREADS);
+void RadixHashJoin(Relation *relR, Relation *relS,inbet_list *res1,inbet_list *res2,threadpool *thpool){
   int num_of_buckets = pow(2,N);
   Relation *relS_seg , *relR_seg;
   int *histogram_R,*histogram_S,*Psum_R,*Psum_S;
@@ -301,7 +300,6 @@ void RadixHashJoin(Relation *relR, Relation *relS,inbet_list *res1,inbet_list *r
   free(relR_seg->tuples);
   free (relS_seg);
   free (relR_seg);
-  THP_Destroy(thpool);
 }
 
 int getnextodd(int num)
@@ -362,4 +360,17 @@ Relation *BuildRelation(int *inb,int num_tuples,int rel_id,Relation *init_relati
     new_relation->tuples[i].payload = init_relation->tuples[inb[i]].payload;
   }
   return new_relation;
+}
+
+void FreeData(all_data *datatable){
+  for(int i=0;i<datatable->num_relations;i++){
+    for(int j=0;j<datatable->table[i]->numColumns;j++){
+      free(datatable->table[i]->columns[j]->tuples);
+      free(datatable->table[i]->columns[j]);
+    }
+    free(datatable->table[i]->columns);
+    free(datatable->table[i]);
+  }
+  free(datatable->table);
+  free(datatable);
 }

@@ -2,7 +2,6 @@
 #include <string.h>
 #include "predicates.h"
 #include "inbetween.h"
-#include "thpool.h"
 #include <unistd.h>
 #include <ctype.h>
 
@@ -53,42 +52,6 @@ void compute_operation(char op,int constant,Relation *relation,inbet_list *A){
 }
 
 
-void compute_operation2(char op,int constant,Relation *relation,inbet_list *A,threadpool *thpool){
-  /*ektelei ta filtra twn query kai eisagi stin lista A ta kleidia*/
-  Filter_arg filter_args[N_THREADS];
-  int merge = relation->num_tuples / N_THREADS;
-  int start=0;
-  for(int i=0;i<N_THREADS;i++){
-    filter_args[i].constant=constant;
-    filter_args[i].op=op;
-    filter_args[i].relation = relation;
-    filter_args[i].start = start;
-    if(i==N_THREADS-1){
-      filter_args[i].end = relation->num_tuples;
-    }else{
-      filter_args[i].end = start+merge;
-    }
-    start+=merge;
-
-  }
-  for(int i=0;i<N_THREADS;i++){
-    THP_AddJob(thpool,(void *)FilterJob,&filter_args[i]);
-  }
-  THP_Barrier(thpool);
-  for(int i=0;i<N_THREADS;i++){
-    if(filter_args[i].result->total_tuples==0) continue;
-    if(A->total_tuples==0){
-      A->head = filter_args[i].result->head;
-      A->current = filter_args[i].result->current;
-    }else{
-      A->current->next = filter_args[i].result->head;
-      A->current = filter_args[i].result->current;
-    }
-    A->total_tuples += filter_args[i].result->total_tuples;
-  }
-}
-
-
 void show_results(inbetween_results *res,relation_data **data, char * token) //thelei ligi doulitsa
 {
   /*emfanizei ta athroismata pou zitountai sto query*/
@@ -129,12 +92,13 @@ void show_results(inbetween_results *res,relation_data **data, char * token) //t
 }
 
 relation_data *parsefile(char * filename){
+  /*pernaei ena arxeio sti mnimi kai to epistrefei,apothikeuontai kai ta statistika*/
   uint64_t num=0;
   uint64_t numofColumns;
   uint64_t numofTuples;
   int sum,max,min;
-  int size_of_d_table;
   int average;
+
   FILE *fp = fopen(filename,"rb");
   if (fp==NULL) {
     printf("Can't find file %s.Try another\n",filename);
@@ -142,6 +106,7 @@ relation_data *parsefile(char * filename){
   }
   fread(&numofTuples,sizeof(uint64_t),1,fp);
   fread(&numofColumns,sizeof(uint64_t),1,fp);
+
   relation_data *r2data =(relation_data *)malloc(sizeof(relation_data));
   r2data->columns = (Relation **)malloc(sizeof(Relation *)*numofColumns);
   for(int i=0;i<numofColumns;i++){
@@ -150,59 +115,37 @@ relation_data *parsefile(char * filename){
     r2data->columns[i]->num_tuples = numofTuples;
   }
   r2data->numColumns = numofColumns;
-//  printf("Has %ju colums\n\n",r2data->numColumns);
   r2data->numTuples = numofTuples;
   char c;
   for(int i=0;i<numofColumns;i++){
-    r2data->columns[i]->l = 99999999; //arxikopoihsh se enan megalo arithmo
-    r2data->columns[i]->u = 0;
-    r2data->columns[i]->f=numofTuples;
-    r2data->columns[i]->d=0;
-    r2data->columns[i]->restored=0;//this is used as a flag when restoring to its original specifications
+    r2data->columns[i]->min = 999999; //arxikopoihsh se enan megalo arithmo
+    r2data->columns[i]->max = 0;
+    r2data->columns[i]->spread=0;
     for(int j=0;j<numofTuples;j++){
       fread(&(num),sizeof(uint64_t),1,fp);
       r2data->columns[i]->tuples[j].payload=num;
       r2data->columns[i]->tuples[j].key = j;
-      if (num<r2data->columns[i]->l)
+      if (num<r2data->columns[i]->min)
       {
-        r2data->columns[i]->l=num;
+        r2data->columns[i]->min=num;
       }
-      if (num>r2data->columns[i]->u)
+      if (num>r2data->columns[i]->max)
       {
-        r2data->columns[i]->u=num;
+        r2data->columns[i]->max=num;
       }
     }
-    //calculating distinct values
-      size_of_d_table = (int)r2data->columns[i]->u-(int)r2data->columns[i]->l+1;
-       if (size_of_d_table<M)
-       {
-        r2data->columns[i]->d_table = (char*)calloc(size_of_d_table,sizeof(char));
-        for(int j=0;j<numofTuples;j++)
-        {
-         num = r2data->columns[i]->tuples[j].payload;
-          int pos = (int)num - (int)r2data->columns[i]->l;
-        r2data->columns[i]->d_table[pos]= 1;
-        }
-       }
-       else
-       {
-        r2data->columns[i]->d_table = (char*)calloc(M,sizeof(char));
-        for(int j=0;j<numofTuples;j++)
-        {
-         num = r2data->columns[i]->tuples[j].payload;
-          int pos = (int)num - (int)r2data->columns[i]->l;
-         r2data->columns[i]->d_table[(pos)%M]= 1;
-        }
-        size_of_d_table = M;
-       }
-       for(int x=0;x<size_of_d_table;x++)
-       {
-         if (r2data->columns[i]->d_table[x]==1)
-          (r2data->columns[i]->d)++;
-       }
-//       printf("\n---------\nColumn %d Statistics:\n",i);
-//       printf("Low: %ju | Upper %ju | Num Values %f | Distinct Values %f\n---------\n",r2data->columns[i]->l,r2data->columns[i]->u,r2data->columns[i]->f,r2data->columns[i]->d);
-
+    //calculate column spread
+    sum=0;
+      for(int j=0;j<numofTuples;j++)
+      {
+        sum += r2data->columns[i]->tuples[j].payload;
+      }
+      average = sum/numofTuples;
+      for(int j=0;j<numofTuples;j++)
+      {
+        sum = (r2data->columns[i]->tuples[j].payload - average) * (r2data->columns[i]->tuples[j].payload - average); //sto tetragono
+      }
+      r2data->columns[i]->spread = sqrt(sum/numofTuples-1);
   }
   return r2data;
-  }
+}

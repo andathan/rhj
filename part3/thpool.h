@@ -1,3 +1,6 @@
+#ifndef _THPOOL_H_
+#define _THPOOL_H_
+
 #include <pthread.h>
 #define N_THREADS 3
 
@@ -44,3 +47,4 @@ job_queue *JQ_Init();
 void THP_Wait(threadpool *thp);
 void THP_Barrier(threadpool *thp);
 void THP_Destroy(threadpool *thp);
+#endif

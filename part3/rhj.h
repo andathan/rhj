@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <time.h>
 #include "predicates.h"
+#include "thpool.h"
 
 #define N 3
 #define SIZE 1000
@@ -116,14 +117,17 @@ int *make_histogram(Relation *in_relation); /*returns the histogram table of giv
 int *make_offsets(int *histogram); /*returns the Psum of given relation*/
 Relation * segmentation(Relation *,int *,int *,int num_of_buckets);
 void IndexAndResult(int ,int ,int ,int ,Relation *,Relation *,inbet_list *,inbet_list *);
-void RadixHashJoin(Relation *, Relation *,inbet_list *,inbet_list *);
+void RadixHashJoin(Relation *, Relation *,inbet_list *,inbet_list *,threadpool *);
 Relation *BuildRelation(int *inb,int num_tuples,int rel_id,Relation *init_relation);
 /*body of functions in datastore.c*/
 
 void SerialCompare(Relation *rel1,Relation *rel2,inbet_list *res1,inbet_list *res2);
 relation_data **find_corresponding(query *,all_data *datatable);
 void compute_operation(char op, int constant,Relation * relation,inbet_list * A);
+void compute_operation2(char op, int constant,Relation * relation,inbet_list * A,threadpool *thp);
 void show_results(inbetween_results *inb_results,relation_data **input_data, char * token);
 relation_data *parsefile(char * filename);
 void FilterJob(Filter_arg *arg);
+
+void FreeData(all_data *datatable);
 #endif

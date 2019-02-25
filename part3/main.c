@@ -1,5 +1,6 @@
 #include "inbetween.h"
 #include "rhj.h"
+#include "thpool.h"
 #include "predicates.h"
 #include <string.h>
 #include <math.h>
@@ -19,7 +20,7 @@ int main (void)
 //  datatable->table = (relation_data **)malloc(sizeof(relation_data *));
 
   getline(&filename,&linesize,stdin);
-
+  threadpool * thp = THP_Init(N_THREADS);
   while(strcmp(filename,"Done\n")!= 0){
     datatable->table = realloc(datatable->table,sizeof(relation_data *)*(datatable->num_relations+1));
     filename[strlen(filename)-1]='\0';
@@ -28,20 +29,25 @@ int main (void)
     getline(&filename,&linesize,stdin);
   }
   size_t b;
+  int c=1;
   b=getline(&filename,&linesize,stdin);
-  while(b!=0){
+  while(b!=-1){
     //new query batch
     input_batch = InitBatch();
-    while(strcmp(filename,"F\n")!=0){ //read and store queries in batch
+    while(filename[0]!='F'){ //read and store queries in batch
       seperate_predicate(filename,tokens);
       AddToBatch(input_batch,tokens);
       getline(&filename,&linesize,stdin);
     }
 
     for(int k=0;k<input_batch->num_of_queries;k++){
-      execute_query(input_batch->queries_table[k],datatable);
+      execute_query(input_batch->queries_table[k],datatable,thp);
     }
     FreeBatch(input_batch);
+    fprintf(stderr,"Batch %d completed\n",c);
+    c++;
     b=getline(&filename,&linesize,stdin);
   }
+  THP_Destroy(thp);
+  FreeData(datatable);
 }

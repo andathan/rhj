@@ -14,6 +14,7 @@ inbet_list *InitInbetList(){
   list->head=NULL;
   list->current=NULL;
   list->total_tuples=0;
+  return list;
 }
 
 inbetween_results *InitInbetResults(int n){
@@ -226,8 +227,27 @@ void PrintInbetList(inbet_list *list){
   }
 }
 
+void FreeResults(inbet_list *res){
+  if(res==NULL) return;
+  inbet_node *curr = res->head;
+  inbet_node *next = NULL;
+  while(curr!=NULL){
+    next = curr->next;
+    free(curr);
+    curr = next;
+  }
+  free(res);
+}
 
 void FreeInbetList(inbetween_results *list){
   /*frees current list so it gets initialized for new inbetween results */
-
+  if(list==NULL) return;
+  for(int i=0;i<list->num_lists;i++){
+    if(list->joined[i]!=-1){
+      free(list->inbetween[i]);
+    }
+  }
+  free(list->joined);
+  free(list->inbetween);
+  free(list);
 }
